@@ -6,14 +6,15 @@ import com.google.gson.GsonBuilder;
 import com.github.gfx.static_gson.model.Author;
 import com.github.gfx.static_gson.model.Book;
 import com.github.gfx.static_gson.model.ModelWithBasicTypes;
+import com.github.gfx.static_gson.model.ModelWithNumerics;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
 
 /**
  * @see com.github.gfx.static_gson.model.Book_TypeAdapterFactory
@@ -61,5 +62,11 @@ public class StaticGsonTest {
         ModelWithBasicTypes deserialized = gson.fromJson(serialized, ModelWithBasicTypes.class);
 
         assertThat(deserialized, is(model));
+    }
+
+    @Test
+    public void deserializeNumericFromString() throws Exception {
+        ModelWithNumerics model = gson.fromJson("{\"value\": \"42\"}", ModelWithNumerics.class);
+        assertThat(model.value, is(42));
     }
 }
