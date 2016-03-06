@@ -3,6 +3,7 @@ package com.github.gfx.static_gson;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import com.bluelinelabs.logansquare.LoganSquare;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
@@ -41,9 +42,10 @@ public class MainActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                start("dynamic gson", dynamicGson);
-                start("static gson", staticGson);
-                start("moshi", moshi);
+                start("Dynamic Gson", dynamicGson);
+                start("Static Gson", staticGson);
+                start("Moshi", moshi);
+                start("LoganSquare");
             }
         }, 1000);
     }
@@ -114,4 +116,49 @@ public class MainActivity extends AppCompatActivity {
             }
         }.execute();
     }
+
+    void start(final String label) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                Session session = new Session();
+                String serialized;
+                try {
+                    serialized = LoganSquare.serialize(session);
+                } catch (IOException e) {
+                    throw new AssertionError(e);
+                }
+                System.gc();
+
+                Log.d("XXX", "start benchmarking " + label);
+
+                long t0 = System.currentTimeMillis();
+                for (int i = 0; i < N; i++) {
+                    try {
+                        @SuppressWarnings("unused")
+                        String s = LoganSquare.serialize(session);
+                    } catch (IOException e) {
+                        throw new AssertionError(e);
+                    }
+                }
+                long elapsed = System.currentTimeMillis() - t0;
+                Log.d("XXX", label + " in serialization: " + elapsed + "ms");
+                System.gc();
+
+                t0 = System.currentTimeMillis();
+                for (int i = 0; i < N; i++) {
+                    try {
+                        @SuppressWarnings("unused")
+                        Session s = LoganSquare.parse(serialized, Session.class);
+                    } catch (IOException e) {
+                        throw new AssertionError(e);
+                    }
+                }
+                elapsed = System.currentTimeMillis() - t0;
+                Log.d("XXX", label + " in deserialization: " + elapsed + "ms");
+                return null;
+            }
+        }.execute();
+    }
+
 }
