@@ -2,8 +2,8 @@ package com.github.gfx.static_gson;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
-import com.github.gfx.static_gson.model.Author;
 import com.github.gfx.static_gson.model.Book;
 import com.github.gfx.static_gson.model.ModelWithBasicTypes;
 import com.github.gfx.static_gson.model.ModelWithNumerics;
@@ -33,10 +33,16 @@ public class StaticGsonTest {
     }
 
     @Test
+    public void loadFactory() throws Exception {
+        assertThat(StaticGsonTypeAdapterFactory.loadFactory(TypeToken.get(Book.class)), is(notNullValue()));
+        assertThat(StaticGsonTypeAdapterFactory.loadFactory(TypeToken.get(Book.Author.class)), is(notNullValue()));
+    }
+
+    @Test
     public void reloadBook() throws Exception {
         Book book = new Book();
         book.title = "About JSON";
-        book.authors = Arrays.asList(Author.create("foo"), Author.create("bar"));
+        book.authors = Arrays.asList(Book.Author.create("foo"), Book.Author.create("bar"));
 
         String serialized = gson.toJson(book);
         Book deserialized = gson.fromJson(serialized, Book.class);
@@ -46,10 +52,10 @@ public class StaticGsonTest {
 
     @Test
     public void reloadAuthor() throws Exception {
-        Author author = Author.create("foo bar");
+        Book.Author author = Book.Author.create("foo bar");
 
         String serialized = gson.toJson(author);
-        Author deserialized = gson.fromJson(serialized, Author.class);
+        Book.Author deserialized = gson.fromJson(serialized, Book.Author.class);
 
         assertThat(deserialized, is(author));
     }

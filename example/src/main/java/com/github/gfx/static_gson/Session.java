@@ -18,16 +18,19 @@ public class Session {
 
     @JsonField
     public String description
-            = "How to handle JSON in Android Applications with JSON processing libraries";
+            = "How to handle JSON in Android Applications with JSON processing libraries.\n"
+            + "There are a lot of JSON processing libraries: org.json, Gson, JsonPullParser, Moshi, LoganSquare\n"
+            + "Some uses annotation processing while the other uses reflection.\n"
+            + "blah blah blah blah...";
 
     @JsonField
     public long speakerId = 42;
 
     @JsonField
-    public long stime = new Date().getTime();
+    public long startTime = new Date().getTime();
 
     @JsonField
-    public long etime = new Date().getTime();
+    public long endTime = new Date().getTime();
 
     @JsonField
     public long categoryId = 43;
@@ -36,17 +39,35 @@ public class Session {
     public long placeId = 44;
 
     @JsonField
-    public String languageId = "ja";
+    public String languageId = "en";
 
     @JsonField
-    public String slideUrl = "http://example.com/slide";
+    public Asset slideUrl = Asset.create("slide", "http://example.com/slide");
 
     @JsonField
-    public String movieUrl = "http://example.com/movie";
+    public Asset movieUrl = Asset.create("movie", "http://example.com/movie");
 
     @JsonField
-    public String shareUrl = "http://example.com/share";
+    public Asset shareUrl = Asset.create("share", "http://example.com/share");
 
     @JsonField
     public boolean checked = false;
+
+    @JsonObject
+    @JsonSerializable
+    public static class Asset {
+
+        public String label;
+
+        public String url;
+
+        public static Asset create(String label, String url) {
+            Asset asset = new Asset();
+
+            asset.label = label;
+            asset.url = url;
+
+            return asset;
+        }
+    }
 }

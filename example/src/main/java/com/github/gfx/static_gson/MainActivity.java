@@ -17,7 +17,7 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
-    static final int N = 3000;
+    static final int N = 2000;
 
     final Gson dynamicGson = new GsonBuilder()
             .create();

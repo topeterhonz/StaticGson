@@ -5,33 +5,33 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A {@link TypeAdapterFactory} to handle {@link com.github.gfx.static_gson.annotation.JsonSerializable}.
  */
 public class StaticGsonTypeAdapterFactory implements TypeAdapterFactory {
 
-    private final Map<TypeToken<?>, TypeAdapterFactory> cache = new HashMap<>();
+    @NonNull
+    private static String createTypeAdapterFactoryClassName(@NonNull Class<?> modelType) {
+        return modelType.getName() + "$TypeAdapterFactory";
+    }
 
     @Nullable
-    public TypeAdapterFactory loadFactory(TypeToken<?> typeToken) {
-        TypeAdapterFactory factory = cache.get(typeToken);
-        if (factory == null) {
-            String name = typeToken.getRawType().getCanonicalName() + "_TypeAdapterFactory";
-            try {
-                factory = (TypeAdapterFactory) Class.forName(name).newInstance();
-            } catch (ClassNotFoundException e) {
-                return null;
-            } catch (IllegalAccessException | InstantiationException | ClassCastException e) {
-                throw new RuntimeException("Can't create an instance of " + name, e);
-            }
-            cache.put(typeToken, factory);
+    public static TypeAdapterFactory loadFactory(@NonNull TypeToken<?> typeToken) {
+        String name = createTypeAdapterFactoryClassName(typeToken.getRawType());
+        Class<?> factoryClass;
+        try {
+            factoryClass = Class.forName(name);
+        } catch (ClassNotFoundException e) {
+            return null;
         }
-        return factory;
+        try {
+            return (TypeAdapterFactory) factoryClass.newInstance();
+        } catch (IllegalAccessException | InstantiationException | ClassCastException e) {
+            throw new RuntimeException("Can't create an instance of " + name, e);
+        }
     }
 
     @Override
