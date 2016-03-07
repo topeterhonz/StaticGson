@@ -17,9 +17,7 @@ import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 
 /**
- * @see com.github.gfx.static_gson.model.Book_TypeAdapterFactory
- * @see com.github.gfx.static_gson.model.Author_TypeAdapterFactory
- * @see com.github.gfx.static_gson.model.ModelWithBasicTypes_TypeAdapterFactory
+ * @see StaticGsonTypeAdapterFactory
  */
 public class StaticGsonTest {
 
@@ -36,6 +34,7 @@ public class StaticGsonTest {
     public void loadFactory() throws Exception {
         assertThat(StaticGsonTypeAdapterFactory.loadFactory(TypeToken.get(Book.class)), is(notNullValue()));
         assertThat(StaticGsonTypeAdapterFactory.loadFactory(TypeToken.get(Book.Author.class)), is(notNullValue()));
+        assertThat(StaticGsonTypeAdapterFactory.loadFactory(TypeToken.get(StaticGsonTest.class)), is(nullValue()));
     }
 
     @Test
