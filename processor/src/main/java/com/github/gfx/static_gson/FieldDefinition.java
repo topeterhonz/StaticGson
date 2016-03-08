@@ -97,6 +97,11 @@ public class FieldDefinition {
 
         if (!type.isPrimitive()) {
             block.endControlFlow();
+            if (config.serializeNulls()) {
+                block.beginControlFlow("else");
+                block.addStatement("$L.nullValue()", writer);
+                block.endControlFlow();
+            }
         }
         return block.build();
     }

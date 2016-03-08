@@ -36,7 +36,7 @@ public class StaticGsonTest {
     }
 
     @Test
-    public void loadFactory() throws Exception {
+    public void createTypeAdapter() throws Exception {
         assertThat(typeAdapterFactory.create(gson, TypeToken.get(Book.class)), is(notNullValue()));
         assertThat(typeAdapterFactory.create(gson, TypeToken.get(Book.Author.class)), is(notNullValue()));
         assertThat(typeAdapterFactory.create(gson, TypeToken.get(StaticGsonTest.class)), is(nullValue()));
