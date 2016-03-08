@@ -19,5 +19,5 @@ public class Types {
 
     public static final ClassName $Gson$Types = ClassName.get($Gson$Types.class);
 
-    public static final ClassName TypeAapter = ClassName.get(TypeAdapter.class);
+    public static final ClassName TypeAdapter = ClassName.get(TypeAdapter.class);
 }

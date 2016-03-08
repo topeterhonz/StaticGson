@@ -8,6 +8,7 @@ import com.google.gson.reflect.TypeToken;
 import com.github.gfx.static_gson.model.Book;
 import com.github.gfx.static_gson.model.ModelWithBasicTypes;
 import com.github.gfx.static_gson.model.ModelWithNumerics;
+import com.github.gfx.static_gson.model.ModelWithSingleValue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -77,5 +78,22 @@ public class StaticGsonTest {
     public void deserializeNumericFromString() throws Exception {
         ModelWithNumerics model = gson.fromJson("{\"value\": \"42\"}", ModelWithNumerics.class);
         assertThat(model.value, is(42));
+    }
+
+    @Test
+    public void deserializeNumericFromNull() throws Exception {
+        ModelWithNumerics model = gson.fromJson("{\"value\": null}", ModelWithNumerics.class);
+        assertThat(model.value, is(0));
+    }
+
+    @Test
+    public void serializeNullValue() throws Exception {
+        ModelWithSingleValue model = new ModelWithSingleValue();
+        assertThat(gson.toJson(model), is("{}"));
+    }
+
+    @Test
+    public void deserializeNullValue() throws Exception {
+        assertThat(gson.fromJson("{}", ModelWithSingleValue.class).value, is(nullValue()));
     }
 }

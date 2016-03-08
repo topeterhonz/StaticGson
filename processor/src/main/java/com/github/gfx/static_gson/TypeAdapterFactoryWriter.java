@@ -10,6 +10,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
@@ -46,27 +47,33 @@ public class TypeAdapterFactoryWriter {
     }
 
     TypeSpec buildTypeSpec() {
-        TypeSpec.Builder type = TypeSpec.classBuilder(typeAdapterClassName);
-        type.addJavadoc("This class is dynamically loaded by {@link $T}.\n", Types.StaticGsonTypeAdapterFactory);
-        type.addAnnotation(Annotations.suppressWarnings("unused"));
-        type.addAnnotation(Annotations.staticGsonGenerated());
-        type.addModifiers(Modifier.PUBLIC);
-        type.superclass(typeAdapter);
+        TypeSpec.Builder typeAdapterClass = TypeSpec.classBuilder(typeAdapterClassName);
+        typeAdapterClass.addJavadoc("This class is dynamically loaded by {@link $T}.\n", Types.StaticGsonTypeAdapterFactory);
+        typeAdapterClass.addAnnotation(Annotations.suppressWarnings("unused"));
+        typeAdapterClass.addAnnotation(Annotations.staticGsonGenerated());
+        typeAdapterClass.addModifiers(Modifier.PUBLIC);
+        typeAdapterClass.superclass(typeAdapter);
 
-        type.addField(Gson.class, "gson", Modifier.PRIVATE, Modifier.FINAL);
-        type.addField(typeToken, "typeToken", Modifier.PRIVATE, Modifier.FINAL);
-        type.addMethod(MethodSpec.constructorBuilder()
+        typeAdapterClass.addField(Gson.class, "gson", Modifier.PRIVATE, Modifier.FINAL);
+        typeAdapterClass.addField(typeToken, "typeToken", Modifier.PRIVATE, Modifier.FINAL);
+
+        for (TypeName type : model.getComplexTypes()) {
+            typeAdapterClass.addField(model.typeRegistry.getField(type));
+        }
+
+        typeAdapterClass.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(Gson.class, "gson")
                 .addParameter(typeToken, "typeToken")
                 .addStatement("this.gson = gson")
                 .addStatement("this.typeToken = typeToken")
+                .addCode(model.typeRegistry.getFieldInitialization())
                 .build());
 
-        type.addMethod(buildWriteMethod());
-        type.addMethod(buildReadMethod());
+        typeAdapterClass.addMethod(buildWriteMethod());
+        typeAdapterClass.addMethod(buildReadMethod());
 
-        return type.build();
+        return typeAdapterClass.build();
     }
 
     /**
@@ -82,7 +89,7 @@ public class TypeAdapterFactoryWriter {
 
         method.addStatement("writer.beginObject()");
         for (FieldDefinition field : model.getFields()) {
-            method.addCode(field.buildWriteBlock("value", "writer"));
+            method.addCode(field.buildWriteBlock(model.typeRegistry, "value", "writer"));
         }
         method.addStatement("writer.endObject()");
 
@@ -109,7 +116,7 @@ public class TypeAdapterFactoryWriter {
             for (String name : field.getSerializedNameCandidates()) {
                 method.addCode("case $S:\n", name);
             }
-            method.addCode(field.buildReadCodeBlock("object", "reader"));
+            method.addCode(field.buildReadCodeBlock(model.typeRegistry, "object", "reader"));
             method.addStatement("break");
         }
         method.addStatement("default: break");
