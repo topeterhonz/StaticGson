@@ -1,5 +1,8 @@
 package com.github.gfx.static_gson;
 
+import com.google.gson.FieldNamingPolicy;
+
+import com.github.gfx.static_gson.annotation.JsonSerializable;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 
@@ -29,16 +32,18 @@ public class ModelDefinition {
 
         modelType = ClassName.get(element);
 
-        fields = extractFields(context, element);
+        JsonSerializable annotation = element.getAnnotation(JsonSerializable.class);
+        fields = extractFields(annotation, element);
     }
 
-    private static List<FieldDefinition> extractFields(StaticGsonContext context,
+    private static List<FieldDefinition> extractFields(
+            JsonSerializable config,
             TypeElement typeElement) {
         return typeElement.getEnclosedElements().stream()
                 .filter(element -> element instanceof VariableElement)
                 .map(element -> (VariableElement) element)
                 .filter(element -> !element.getModifiers().contains(Modifier.TRANSIENT))
-                .map(element -> new FieldDefinition(context, element))
+                .map(element -> new FieldDefinition(config, element))
                 .collect(Collectors.toList());
     }
 

@@ -39,7 +39,8 @@ public class TypeAdapterFactoryWriter {
     }
 
     static String createTypeAdapterClassName(ClassName modelType) {
-        return modelType.simpleNames().stream().collect(Collectors.joining("$")) + "$StaticGsonTypeAdapter";
+        String modelClassName = modelType.simpleNames().stream().collect(Collectors.joining("$"));
+        return StaticGsonTypeAdapterFactory.getTypeAdapterFactoryName(modelClassName);
     }
 
     String getPackageName() {
@@ -62,6 +63,7 @@ public class TypeAdapterFactoryWriter {
         }
 
         typeAdapterClass.addMethod(MethodSpec.constructorBuilder()
+                .addAnnotation(Annotations.suppressWarnings("unchecked"))
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(Gson.class, "gson")
                 .addParameter(typeToken, "typeToken")
@@ -119,7 +121,9 @@ public class TypeAdapterFactoryWriter {
             method.addCode(field.buildReadCodeBlock(model.typeRegistry, "object", "reader"));
             method.addStatement("break");
         }
-        method.addStatement("default: break");
+        method.addCode("default:\n");
+        method.addStatement("reader.skipValue()");
+        method.addStatement("break");
         method.endControlFlow(); // switch
         method.endControlFlow(); // while
         method.addStatement("reader.endObject()");

@@ -1,19 +1,22 @@
 package com.github.gfx.static_gson;
 
+import com.google.gson.FieldNamingPolicy;
 import com.google.gson.annotations.SerializedName;
 
+import com.github.gfx.static_gson.annotation.JsonSerializable;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import javax.lang.model.element.VariableElement;
 
 public class FieldDefinition {
 
-    private final StaticGsonContext context;
+    private final JsonSerializable config;
 
     private final VariableElement element;
 
@@ -25,8 +28,8 @@ public class FieldDefinition {
 
     private final List<String> serializedNameCandidates;
 
-    public FieldDefinition(StaticGsonContext context, VariableElement element) {
-        this.context = context;
+    public FieldDefinition(JsonSerializable config, VariableElement element) {
+        this.config = config;
         this.element = element;
         type = TypeName.get(element.asType());
         fieldName = element.getSimpleName().toString();
@@ -35,10 +38,11 @@ public class FieldDefinition {
         SerializedName annotation = element.getAnnotation(SerializedName.class);
         if (annotation != null) {
             serializedName = annotation.value();
+            serializedNameCandidates.add(serializedName);
             Collections.addAll(serializedNameCandidates, annotation.alternate());
         } else {
-            serializedName = fieldName;
-            serializedNameCandidates.add(fieldName);
+            serializedName = translateName(fieldName);
+            serializedNameCandidates.add(serializedName);
         }
     }
 
@@ -67,19 +71,23 @@ public class FieldDefinition {
 
     /**
      *
-     * @param typeRegistry
+     * @param typeRegistry A type registry for the model type
      * @param object A name of the target object
      * @param writer A {@link com.google.gson.stream.JsonWriter} instance
      * @return Statements to write the field
      */
     public CodeBlock buildWriteBlock(TypeRegistry typeRegistry, String object, String writer) {
         CodeBlock.Builder block = CodeBlock.builder();
-        if (!type.isPrimitive()) {
-            // FIXME: respect serializeNulls()
+        if (!type.isPrimitive() && !config.serializeNulls()) {
             block.beginControlFlow("if ($L.$L != null)", object, fieldName);
         }
 
         block.addStatement("$L.name($S)", writer, serializedName);
+
+        if (!type.isPrimitive() && config.serializeNulls()) {
+            block.beginControlFlow("if ($L.$L != null)", object, fieldName);
+        }
+
         if (isSimpleType()) {
             block.addStatement("$L.value($L.$L)", writer, object, fieldName);
         } else {
@@ -95,7 +103,7 @@ public class FieldDefinition {
 
     /**
      *
-     * @param typeRegistry
+     * @param typeRegistry A type registry for the model type
      * @param object A name of the target object
      * @param reader A {@link com.google.gson.stream.JsonReader} instance
      * @return An expression to read the field
@@ -122,5 +130,65 @@ public class FieldDefinition {
         }
 
         return block.build();
+    }
+
+
+    private String translateName(String name) {
+        switch (config.fieldNamingPolicy()) {
+            case UPPER_CAMEL_CASE:
+                return upperCaseFirstLetter(name);
+            case UPPER_CAMEL_CASE_WITH_SPACES:
+                return upperCaseFirstLetter(separateCamelCase(name, " "));
+            case LOWER_CASE_WITH_UNDERSCORES:
+                return separateCamelCase(name, "_").toLowerCase(Locale.ENGLISH);
+            case LOWER_CASE_WITH_DASHES:
+                return separateCamelCase(name, "-").toLowerCase(Locale.ENGLISH);
+            default: // IDENTITY
+                return name;
+        }
+    }
+
+    private static String separateCamelCase(String name, String separator) {
+        StringBuilder translation = new StringBuilder();
+        for (int i = 0; i < name.length(); i++) {
+            char character = name.charAt(i);
+            if (Character.isUpperCase(character) && translation.length() != 0) {
+                translation.append(separator);
+            }
+            translation.append(character);
+        }
+        return translation.toString();
+    }
+
+    private static String upperCaseFirstLetter(String name) {
+        StringBuilder fieldNameBuilder = new StringBuilder();
+        int index = 0;
+        char firstCharacter = name.charAt(index);
+
+        while (index < name.length() - 1) {
+            if (Character.isLetter(firstCharacter)) {
+                break;
+            }
+
+            fieldNameBuilder.append(firstCharacter);
+            firstCharacter = name.charAt(++index);
+        }
+
+        if (index == name.length()) {
+            return fieldNameBuilder.toString();
+        }
+
+        if (!Character.isUpperCase(firstCharacter)) {
+            String modifiedTarget = modifyString(Character.toUpperCase(firstCharacter), name, ++index);
+            return fieldNameBuilder.append(modifiedTarget).toString();
+        } else {
+            return name;
+        }
+    }
+
+    private static String modifyString(char firstCharacter, String srcString, int indexOfSubstring) {
+        return (indexOfSubstring < srcString.length())
+                ? firstCharacter + srcString.substring(indexOfSubstring)
+                : String.valueOf(firstCharacter);
     }
 }

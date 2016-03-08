@@ -13,14 +13,18 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class StaticGsonTypeAdapterFactory implements TypeAdapterFactory {
 
-    private static String createTypeAdapterClassName(Class<?> modelType) {
-        return modelType.getName() + "$StaticGsonTypeAdapter";
+    public static StaticGsonTypeAdapterFactory newInstance() {
+        return new StaticGsonTypeAdapterFactory();
+    }
+
+    public static String getTypeAdapterFactoryName(String modelClassName) {
+        return modelClassName + "$StaticGsonTypeAdapter";
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
-        String name = createTypeAdapterClassName(typeToken.getRawType());
+        String name = getTypeAdapterFactoryName(typeToken.getRawType().getName());
         Class<?> typeAdapterClass;
         try {
             typeAdapterClass = Class.forName(name);
