@@ -1,5 +1,6 @@
 package com.github.gfx.static_gson;
 
+import com.google.gson.TypeAdapter;
 import com.google.gson.internal.$Gson$Types;
 import com.google.gson.reflect.TypeToken;
 
@@ -18,5 +19,5 @@ public class Types {
 
     public static final ClassName $Gson$Types = ClassName.get($Gson$Types.class);
 
-    public static final ClassName Keep = ClassName.get("android.support.annotation", "Keep");
+    public static final ClassName TypeAapter = ClassName.get(TypeAdapter.class);
 }

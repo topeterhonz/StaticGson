@@ -5,42 +5,39 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * A {@link TypeAdapterFactory} to handle {@link com.github.gfx.static_gson.annotation.JsonSerializable}.
  */
 public class StaticGsonTypeAdapterFactory implements TypeAdapterFactory {
 
-    @NonNull
-    private static String createTypeAdapterFactoryClassName(@NonNull Class<?> modelType) {
-        return modelType.getName() + "$TypeAdapterFactory";
+    private static String createTypeAdapterClassName(Class<?> modelType) {
+        return modelType.getName() + "$TypeAdapter";
     }
 
-    @Nullable
-    public static TypeAdapterFactory loadFactory(@NonNull TypeToken<?> typeToken) {
-        String name = createTypeAdapterFactoryClassName(typeToken.getRawType());
-        Class<?> factoryClass;
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+        String name = createTypeAdapterClassName(typeToken.getRawType());
+        Class<?> typeAdapterClass;
         try {
-            factoryClass = Class.forName(name);
+            typeAdapterClass = Class.forName(name);
         } catch (ClassNotFoundException e) {
             return null;
         }
-        try {
-            return (TypeAdapterFactory) factoryClass.newInstance();
-        } catch (IllegalAccessException | InstantiationException | ClassCastException e) {
-            throw new RuntimeException("Can't create an instance of " + name, e);
-        }
-    }
 
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
-        TypeAdapterFactory factory = loadFactory(typeToken);
-        if (factory != null) {
-            return factory.create(gson, typeToken);
-        } else {
-            return null;
+        Constructor<TypeAdapter<T>> constructor;
+        try {
+            constructor = (Constructor<TypeAdapter<T>>) typeAdapterClass.getDeclaredConstructor(Gson.class, TypeToken.class);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException("Missing constructor constructor(Gson, TypeToken) for " + name, e);
+        }
+        try {
+            return constructor.newInstance(gson, typeToken);
+        } catch (IllegalAccessException | InstantiationException | ClassCastException | InvocationTargetException e) {
+            throw new RuntimeException("Can't create an instance of " + name, e);
         }
     }
 }

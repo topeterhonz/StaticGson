@@ -2,6 +2,7 @@ package com.github.gfx.static_gson;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 
 import com.github.gfx.static_gson.model.Book;
@@ -23,18 +24,21 @@ public class StaticGsonTest {
 
     Gson gson;
 
+    TypeAdapterFactory typeAdapterFactory;
+
     @Before
     public void setUp() throws Exception {
+        typeAdapterFactory = new StaticGsonTypeAdapterFactory();
         gson = new GsonBuilder()
-                .registerTypeAdapterFactory(new StaticGsonTypeAdapterFactory())
+                .registerTypeAdapterFactory(typeAdapterFactory)
                 .create();
     }
 
     @Test
     public void loadFactory() throws Exception {
-        assertThat(StaticGsonTypeAdapterFactory.loadFactory(TypeToken.get(Book.class)), is(notNullValue()));
-        assertThat(StaticGsonTypeAdapterFactory.loadFactory(TypeToken.get(Book.Author.class)), is(notNullValue()));
-        assertThat(StaticGsonTypeAdapterFactory.loadFactory(TypeToken.get(StaticGsonTest.class)), is(nullValue()));
+        assertThat(typeAdapterFactory.create(gson, TypeToken.get(Book.class)), is(notNullValue()));
+        assertThat(typeAdapterFactory.create(gson, TypeToken.get(Book.Author.class)), is(notNullValue()));
+        assertThat(typeAdapterFactory.create(gson, TypeToken.get(StaticGsonTest.class)), is(nullValue()));
     }
 
     @Test
