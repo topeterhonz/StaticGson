@@ -2,6 +2,15 @@
 
 This library makes Gson faster by generationg TypeAapterFactory with annotation processing.
 
+## Gradle Dependencies
+
+```gradle
+dependencies {
+    apt 'com.github.gfx.static_gson:static-gson-processor:v0.9.0'
+    compile 'com.github.gfx.static_gson:static-gson:v0.9.0'
+}
+```
+
 ## Usage
 
 Add `@JsonSerializable` to JSON serializable models:
