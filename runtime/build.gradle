@@ -1,35 +1,12 @@
-apply plugin: 'com.android.library'
-apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: 'java'
 
-android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
-
-    defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
-
-        consumerProguardFiles 'proguard-rules.pro'
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
-    }
-}
+targetCompatibility = JavaVersion.VERSION_1_7
+sourceCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
     compile project(':annotations')
     compile 'com.google.code.gson:gson:2.6.2'
-    compile 'com.android.support:support-annotations:23.2.0'
-    testApt project(':processor')
+    testCompile project(':processor')
     testCompile 'junit:junit:4.12'
     testCompile 'org.hamcrest:hamcrest-library:1.3'
 }
