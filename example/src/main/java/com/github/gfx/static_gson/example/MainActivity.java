@@ -1,9 +1,10 @@
-package com.github.gfx.static_gson;
+package com.github.gfx.static_gson.example;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import com.bluelinelabs.logansquare.LoganSquare;
+import com.github.gfx.static_gson.StaticGsonTypeAdapterFactory;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 

@@ -1,4 +1,4 @@
-package com.github.gfx.static_gson;
+package com.github.gfx.static_gson.example;
 
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
