@@ -38,7 +38,7 @@ public class TypeAdapterFactoryWriter {
     }
 
     static String createTypeAdapterClassName(ClassName modelType) {
-        return modelType.simpleNames().stream().collect(Collectors.joining("$")) + "$TypeAdapter";
+        return modelType.simpleNames().stream().collect(Collectors.joining("$")) + "$StaticGsonTypeAdapter";
     }
 
     String getPackageName() {

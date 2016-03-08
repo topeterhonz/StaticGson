@@ -14,7 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 public class StaticGsonTypeAdapterFactory implements TypeAdapterFactory {
 
     private static String createTypeAdapterClassName(Class<?> modelType) {
-        return modelType.getName() + "$TypeAdapter";
+        return modelType.getName() + "$StaticGsonTypeAdapter";
     }
 
     @SuppressWarnings("unchecked")
