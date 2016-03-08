@@ -1,4 +1,4 @@
-# Static Gson [![Circle CI](https://circleci.com/gh/gfx/StaticGson.svg?style=svg)](https://circleci.com/gh/gfx/StaticGson)
+# Static Gson [![Circle CI](https://circleci.com/gh/gfx/StaticGson.svg?style=svg)](https://circleci.com/gh/gfx/StaticGson) [ ![Download](https://api.bintray.com/packages/gfx/maven/static-gson/images/download.svg) ](https://bintray.com/gfx/maven/static-gson/)
 
 This library makes Gson faster by generationg TypeAapterFactory with annotation processing.
 
