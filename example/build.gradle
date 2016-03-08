@@ -6,7 +6,7 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        applicationId "com.github.gfx.staticgson"
+        applicationId "com.github.gfx.static_gson.example"
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
