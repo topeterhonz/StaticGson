@@ -55,9 +55,6 @@ public class TypeAdapterFactoryWriter {
         typeAdapterClass.addModifiers(Modifier.PUBLIC);
         typeAdapterClass.superclass(typeAdapter);
 
-        typeAdapterClass.addField(Gson.class, "gson", Modifier.PRIVATE, Modifier.FINAL);
-        typeAdapterClass.addField(typeToken, "typeToken", Modifier.PRIVATE, Modifier.FINAL);
-
         for (TypeName type : model.getComplexTypes()) {
             typeAdapterClass.addField(model.typeRegistry.getField(type));
         }
@@ -67,8 +64,6 @@ public class TypeAdapterFactoryWriter {
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(Gson.class, "gson")
                 .addParameter(typeToken, "typeToken")
-                .addStatement("this.gson = gson")
-                .addStatement("this.typeToken = typeToken")
                 .addCode(model.typeRegistry.getFieldInitialization())
                 .build());
 
