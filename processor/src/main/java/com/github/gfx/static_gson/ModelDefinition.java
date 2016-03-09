@@ -43,6 +43,9 @@ public class ModelDefinition {
                 .filter(element -> element instanceof VariableElement)
                 .map(element -> (VariableElement) element)
                 .filter(element -> !element.getModifiers().contains(Modifier.TRANSIENT))
+                .filter(element -> !element.getModifiers().contains(Modifier.FINAL))
+                .filter(element -> !element.getModifiers().contains(Modifier.PRIVATE)) // FIXME: use accessors
+                .filter(element -> !element.getModifiers().contains(Modifier.STATIC))
                 .map(element -> new FieldDefinition(config, element))
                 .collect(Collectors.toList());
     }
