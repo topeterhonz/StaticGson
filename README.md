@@ -6,8 +6,8 @@ This library makes Gson faster by generationg TypeAapterFactory with annotation 
 
 ```gradle
 dependencies {
-    apt 'com.github.gfx.static_gson:static-gson-processor:0.9.1'
-    compile 'com.github.gfx.static_gson:static-gson:0.9.1'
+    apt 'com.github.gfx.static_gson:static-gson-processor:0.9.2'
+    compile 'com.github.gfx.static_gson:static-gson:0.9.2'
 }
 ```
 
