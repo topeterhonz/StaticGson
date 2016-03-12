@@ -5,19 +5,19 @@ import com.github.gfx.static_gson.annotation.JsonSerializable;
 @JsonSerializable
 public class ModelWithBasicTypes {
 
-    public boolean booleanValue = true;
+    public boolean booleanValue;
 
-    public short shortValue = 1;
+    public short shortValue;
 
-    public int intValue = 2;
+    public int intValue;
 
-    public long longValue = 3;
+    public long longValue;
 
-    public float floatValue = 4;
+    public float floatValue;
 
-    public double doubleValue = 5;
+    public double doubleValue;
 
-    public String stringValue = "foo";
+    public String stringValue;
 
     @Override
     public boolean equals(Object o) {

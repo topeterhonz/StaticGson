@@ -6,6 +6,7 @@ import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 
 import com.github.gfx.static_gson.model.Book;
+import com.github.gfx.static_gson.model.ModelDerived;
 import com.github.gfx.static_gson.model.ModelWithBasicTypes;
 import com.github.gfx.static_gson.model.ModelWithNumerics;
 import com.github.gfx.static_gson.model.ModelWithSingleValue;
@@ -68,10 +69,31 @@ public class StaticGsonTest {
     public void reloadModelWithBasicTypes() throws Exception {
         ModelWithBasicTypes model = new ModelWithBasicTypes();
 
+        model.booleanValue = true;
+        model.shortValue = 1;
+        model.intValue = 2;
+        model.longValue = 3;
+        model.floatValue = 4;
+        model.doubleValue = 5;
+        model.stringValue = "str";
+
         String serialized = gson.toJson(model);
         ModelWithBasicTypes deserialized = gson.fromJson(serialized, ModelWithBasicTypes.class);
 
         assertThat(deserialized, is(model));
+    }
+
+    @Test
+    public void reloadModelWithInheritance() throws Exception {
+        ModelDerived model = new ModelDerived();
+        model.baseValue = "foo";
+        model.derivedValue = "bar";
+
+        String serialized = gson.toJson(model);
+        ModelDerived deserialized = gson.fromJson(serialized, ModelDerived.class);
+
+        assertThat(deserialized.baseValue, is(model.baseValue));
+        assertThat(deserialized.derivedValue, is(model.derivedValue));
     }
 
     @Test
