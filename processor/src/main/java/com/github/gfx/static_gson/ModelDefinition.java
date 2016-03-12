@@ -1,11 +1,10 @@
 package com.github.gfx.static_gson;
 
-import com.google.gson.FieldNamingPolicy;
-
 import com.github.gfx.static_gson.annotation.JsonSerializable;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,7 +32,15 @@ public class ModelDefinition {
         modelType = ClassName.get(element);
 
         JsonSerializable annotation = element.getAnnotation(JsonSerializable.class);
-        fields = extractFields(annotation, element);
+
+        fields = new ArrayList<>();
+        if (!element.getSuperclass().toString().equals(Object.class.toString())) {
+            TypeElement superclassElement = context.processingEnv.getElementUtils()
+                    .getTypeElement(element.getSuperclass().toString());
+            fields.addAll(extractFields(annotation, superclassElement));
+        }
+
+        fields.addAll(extractFields(annotation, element));
     }
 
     private static List<FieldDefinition> extractFields(
