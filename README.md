@@ -1,6 +1,6 @@
 # Static Gson [![Circle CI](https://circleci.com/gh/gfx/StaticGson.svg?style=svg)](https://circleci.com/gh/gfx/StaticGson) [ ![Download](https://api.bintray.com/packages/gfx/maven/static-gson/images/download.svg) ](https://bintray.com/gfx/maven/static-gson/)
 
-This library makes Gson faster by generationg TypeAapterFactory with annotation processing.
+This library makes [Gson](https://github.com/google/gson) faster by generating `TypeAapterFactory` with annotation processing. In other words, this is an AOT compiler for Gson.
 
 ## Gradle Dependencies
 
@@ -56,4 +56,3 @@ D/XXX     : start benchmarking LoganSquare
 D/XXX     : LoganSquare in serialization: 111ms
 D/XXX     : LoganSquare in deserialization: 268ms
 ```
-
