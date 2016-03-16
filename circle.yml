@@ -8,4 +8,4 @@ dependencies:
       - echo y | android update sdk --no-ui --all --filter "extra-android-m2repository"
 test:
   override:
-    - TERM=dumb ./gradlew check
+    - TERM=dumb ./gradlew --info check
