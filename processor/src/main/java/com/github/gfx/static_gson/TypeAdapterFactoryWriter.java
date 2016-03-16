@@ -33,8 +33,8 @@ public class TypeAdapterFactoryWriter {
     public TypeAdapterFactoryWriter(StaticGsonContext context, ModelDefinition model) {
         this.context = context;
         this.model = model;
-        typeAdapter = ParameterizedTypeName.get(ClassName.get(TypeAdapter.class), model.modelType);
-        typeToken = ParameterizedTypeName.get(ClassName.get(TypeToken.class), model.modelType);
+        typeAdapter = Types.getTypeAdapter(model.modelType);
+        typeToken = ParameterizedTypeName.get(Types.TypeToken, model.modelType);
         typeAdapterClassName = createTypeAdapterClassName(model.modelType);
     }
 

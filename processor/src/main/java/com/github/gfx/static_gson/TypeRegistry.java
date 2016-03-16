@@ -33,13 +33,20 @@ public class TypeRegistry {
 
     public CodeBlock getFieldInitialization() {
         CodeBlock.Builder block = CodeBlock.builder();
-        registry.forEach((type, field) -> block.addStatement("$N = ($T) $L",
-                field, ParameterizedTypeName.get(Types.TypeAdapter, type), toInitializer(type)));
+        registry.forEach((type, field) -> {
+            if (type instanceof ParameterizedTypeName) {
+                block.addStatement("$N = ($T) $L",
+                        field, Types.getTypeAdapter(type), toInitializer(type));
+            } else {
+                block.addStatement("$N = $L",
+                        field, toInitializer(type));
+            }
+        });
         return block.build();
     }
 
     private static FieldSpec createField(TypeName type) {
-        return FieldSpec.builder(ParameterizedTypeName.get(Types.TypeAdapter, type), toName(type))
+        return FieldSpec.builder(Types.getTypeAdapter(type), toName(type))
                 .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                 .build();
     }

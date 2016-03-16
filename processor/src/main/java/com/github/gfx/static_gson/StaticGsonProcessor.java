@@ -21,14 +21,14 @@ public class StaticGsonProcessor extends AbstractProcessor {
         if (annotations.isEmpty()) {
             return true;
         }
+        long t0 = System.currentTimeMillis();
 
         StaticGsonContext context = new StaticGsonContext(roundEnv, processingEnv);
 
         roundEnv.getElementsAnnotatedWith(JsonSerializable.class)
-                .stream()
                 .forEach(element -> {
                     processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                            "Processing " + element);
+                            "[StaticGson] processing " + element);
 
                     ModelDefinition model = new ModelDefinition(context, (TypeElement) element);
 
@@ -37,6 +37,11 @@ public class StaticGsonProcessor extends AbstractProcessor {
 
         for (ModelDefinition model : context.modelMap.values()) {
             new TypeAdapterFactoryWriter(context, model).write();
+        }
+
+        if (!context.modelMap.isEmpty()) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                    "[StaticGson] finished in " + (System.currentTimeMillis() - t0) + "ms");
         }
 
         return true;
