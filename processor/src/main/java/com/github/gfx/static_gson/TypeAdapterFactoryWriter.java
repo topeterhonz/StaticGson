@@ -1,8 +1,6 @@
 package com.github.gfx.static_gson;
 
 import com.google.gson.Gson;
-import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -49,7 +47,8 @@ public class TypeAdapterFactoryWriter {
 
     TypeSpec buildTypeSpec() {
         TypeSpec.Builder typeAdapterClass = TypeSpec.classBuilder(typeAdapterClassName);
-        typeAdapterClass.addJavadoc("This class is dynamically loaded by {@link $T}.\n", Types.StaticGsonTypeAdapterFactory);
+        typeAdapterClass.addJavadoc("This class is dynamically loaded by {@link $T}.\n",
+                Types.StaticGsonTypeAdapterFactory);
         typeAdapterClass.addAnnotation(Annotations.suppressWarnings("unused"));
         typeAdapterClass.addAnnotation(Annotations.staticGsonGenerated());
         typeAdapterClass.addModifiers(Modifier.PUBLIC);

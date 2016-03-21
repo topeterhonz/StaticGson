@@ -13,14 +13,6 @@ import static org.hamcrest.Matchers.*;
 
 public class SerializeNullsTest {
 
-    @JsonSerializable(serializeNulls = true)
-    public static class Foo {
-
-        public String foo;
-
-        public Integer bar;
-    }
-
     Gson gson;
 
     @Before
@@ -33,5 +25,13 @@ public class SerializeNullsTest {
     @Test
     public void testName() throws Exception {
         assertThat(gson.toJson(new Foo()), is("{}"));
+    }
+
+    @JsonSerializable(serializeNulls = true)
+    public static class Foo {
+
+        public String foo;
+
+        public Integer bar;
     }
 }

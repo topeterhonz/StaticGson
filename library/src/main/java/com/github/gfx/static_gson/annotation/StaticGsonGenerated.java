@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * A marker annotation indicating it will be dynamically loaded by StaticGsonTypeAdapterFactory.
+ * Not for users.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)

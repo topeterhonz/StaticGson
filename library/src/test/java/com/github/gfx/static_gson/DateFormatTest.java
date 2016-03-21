@@ -17,12 +17,6 @@ import static org.hamcrest.core.Is.is;
 
 public class DateFormatTest {
 
-    @JsonSerializable(fieldNamingPolicy = FieldNamingPolicy.UPPER_CAMEL_CASE)
-    static class Full {
-
-        Date date;
-    }
-
     Gson gson;
 
     @Before
@@ -42,5 +36,11 @@ public class DateFormatTest {
         Full model = new Full();
         model.date = new Date(t);
         assertThat(gson.toJson(model), is("{\"Date\":\"2016-03-15T13:37:24+0000\"}"));
+    }
+
+    @JsonSerializable(fieldNamingPolicy = FieldNamingPolicy.UPPER_CAMEL_CASE)
+    static class Full {
+
+        Date date;
     }
 }

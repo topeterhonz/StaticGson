@@ -13,7 +13,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedAnnotationTypes("com.github.gfx.static_gson.*")
+@SupportedAnnotationTypes("com.github.gfx.static_gson.annotation.JsonSerializable")
 public class StaticGsonProcessor extends AbstractProcessor {
 
     @Override
@@ -21,6 +21,7 @@ public class StaticGsonProcessor extends AbstractProcessor {
         if (annotations.isEmpty()) {
             return true;
         }
+
         long t0 = System.currentTimeMillis();
 
         StaticGsonContext context = new StaticGsonContext(roundEnv, processingEnv);

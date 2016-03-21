@@ -15,34 +15,7 @@ public class TypeRegistry {
 
     private final Map<TypeName, FieldSpec> registry = new HashMap<>();
 
-    public FieldSpec getField(TypeName type) {
-        FieldSpec field = registry.get(type);
-        if (field == null) {
-            field = createField(type);
-            registry.put(type, field);
-        }
-        return field;
-    }
-
-    public Collection<FieldSpec> getFields() {
-        return registry.values();
-    }
-
     public TypeRegistry() {
-    }
-
-    public CodeBlock getFieldInitialization() {
-        CodeBlock.Builder block = CodeBlock.builder();
-        registry.forEach((type, field) -> {
-            if (type instanceof ParameterizedTypeName) {
-                block.addStatement("$N = ($T) $L",
-                        field, Types.getTypeAdapter(type), toInitializer(type));
-            } else {
-                block.addStatement("$N = $L",
-                        field, toInitializer(type));
-            }
-        });
-        return block.build();
     }
 
     private static FieldSpec createField(TypeName type) {
@@ -80,8 +53,34 @@ public class TypeRegistry {
         }
     }
 
-
     private static String toName(TypeName type) {
         return type.toString().replaceAll("[^a-zA-Z0-9?]+", "\\$");
+    }
+
+    public FieldSpec getField(TypeName type) {
+        FieldSpec field = registry.get(type);
+        if (field == null) {
+            field = createField(type);
+            registry.put(type, field);
+        }
+        return field;
+    }
+
+    public Collection<FieldSpec> getFields() {
+        return registry.values();
+    }
+
+    public CodeBlock getFieldInitialization() {
+        CodeBlock.Builder block = CodeBlock.builder();
+        registry.forEach((type, field) -> {
+            if (type instanceof ParameterizedTypeName) {
+                block.addStatement("$N = ($T) $L",
+                        field, Types.getTypeAdapter(type), toInitializer(type));
+            } else {
+                block.addStatement("$N = $L",
+                        field, toInitializer(type));
+            }
+        });
+        return block.build();
     }
 }
