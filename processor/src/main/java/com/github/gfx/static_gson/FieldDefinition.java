@@ -101,14 +101,23 @@ public class FieldDefinition {
         return serializedNameCandidates;
     }
 
+    /**
+     * @return {@code true} if the type doesn't require a specific type adapter
+     */
     public boolean isSimpleType() {
+        // long and Long are not a simple type because of LongSerializationPolicy
         return type.equals(TypeName.BOOLEAN)
-                || type.equals(TypeName.LONG)
                 || type.equals(TypeName.INT)
                 || type.equals(TypeName.BYTE)
                 || type.equals(TypeName.SHORT)
                 || type.equals(TypeName.FLOAT)
                 || type.equals(TypeName.DOUBLE)
+                || type.equals(TypeName.BOOLEAN.box())
+                || type.equals(TypeName.INT.box())
+                || type.equals(TypeName.BYTE.box())
+                || type.equals(TypeName.SHORT.box())
+                || type.equals(TypeName.FLOAT.box())
+                || type.equals(TypeName.DOUBLE.box())
                 || type.equals(Types.String);
     }
 
@@ -156,19 +165,25 @@ public class FieldDefinition {
      */
     public CodeBlock buildReadCodeBlock(TypeRegistry typeRegistry, String object, String reader) {
         CodeBlock.Builder block = CodeBlock.builder();
-        if (type.equals(TypeName.BOOLEAN)) {
+        TypeName unboxType;
+        try {
+            unboxType = type.unbox();
+        } catch (UnsupportedOperationException e) {
+            unboxType = type;
+        }
+        if (unboxType.equals(TypeName.BOOLEAN)) {
             block.addStatement("$L.$L = $L.nextBoolean()", object, fieldName, reader);
-        } else if (type.equals(TypeName.LONG)) {
+        } else if (unboxType.equals(TypeName.LONG)) {
             block.addStatement("$L.$L = $L.nextLong()", object, fieldName, reader);
 
-        } else if (type.equals(TypeName.INT)
-                || type.equals(TypeName.BYTE) || type.equals(TypeName.SHORT)) {
-            block.addStatement("$L.$L = ($T) $L.nextLong()", object, fieldName, type, reader);
-        } else if (type.equals(TypeName.DOUBLE)) {
+        } else if (unboxType.equals(TypeName.INT)
+                || unboxType.equals(TypeName.BYTE) || unboxType.equals(TypeName.SHORT)) {
+            block.addStatement("$L.$L = ($T) $L.nextLong()", object, fieldName, unboxType, reader);
+        } else if (unboxType.equals(TypeName.DOUBLE)) {
             block.addStatement("$L.$L = $L.nextDouble()", object, fieldName, reader);
-        } else if (type.equals(TypeName.FLOAT)) {
-            block.addStatement("$L.$L = ($T) $L.nextDouble()", object, fieldName, type, reader);
-        } else if (type.equals(Types.String)) {
+        } else if (unboxType.equals(TypeName.FLOAT)) {
+            block.addStatement("$L.$L = ($T) $L.nextDouble()", object, fieldName, unboxType, reader);
+        } else if (unboxType.equals(Types.String)) {
             block.addStatement("$L.$L = $L.nextString()", object, fieldName, reader);
         } else {
             block.addStatement("$L.$L = $N.read($L)",

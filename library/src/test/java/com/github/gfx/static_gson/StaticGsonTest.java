@@ -7,8 +7,9 @@ import com.google.gson.reflect.TypeToken;
 
 import com.github.gfx.static_gson.model.Book;
 import com.github.gfx.static_gson.model.ModelDerived;
-import com.github.gfx.static_gson.model.ModelWithBasicTypes;
+import com.github.gfx.static_gson.model.ModelWithBoxTypes;
 import com.github.gfx.static_gson.model.ModelWithNumerics;
+import com.github.gfx.static_gson.model.ModelWithSimpleTypes;
 import com.github.gfx.static_gson.model.ModelWithSingleValue;
 
 import org.junit.Before;
@@ -66,8 +67,8 @@ public class StaticGsonTest {
     }
 
     @Test
-    public void reloadModelWithBasicTypes() throws Exception {
-        ModelWithBasicTypes model = new ModelWithBasicTypes();
+    public void reloadModelWithSimpleTypes() throws Exception {
+        ModelWithSimpleTypes model = new ModelWithSimpleTypes();
 
         model.booleanValue = true;
         model.shortValue = 1;
@@ -78,9 +79,31 @@ public class StaticGsonTest {
         model.stringValue = "str";
 
         String serialized = gson.toJson(model);
-        ModelWithBasicTypes deserialized = gson.fromJson(serialized, ModelWithBasicTypes.class);
+        ModelWithSimpleTypes deserialized = gson.fromJson(serialized, ModelWithSimpleTypes.class);
 
         assertThat(deserialized, is(model));
+    }
+
+    @Test
+    public void reloadModelWithBoxTypes() throws Exception {
+        ModelWithBoxTypes model = new ModelWithBoxTypes();
+
+        model.booleanValue = true;
+        model.shortValue = 1;
+        model.intValue = 2;
+        model.longValue = 3L;
+        model.floatValue = 4.0f;
+        model.doubleValue = 5.0;
+
+        String serialized = gson.toJson(model);
+        ModelWithBoxTypes deserialized = gson.fromJson(serialized, ModelWithBoxTypes.class);
+
+        assertThat(deserialized.booleanValue, is(true));
+        assertThat(deserialized.shortValue, is((short)1));
+        assertThat(deserialized.intValue, is(2));
+        assertThat(deserialized.longValue, is(3L));
+        assertThat(deserialized.floatValue, is(4.0f));
+        assertThat(deserialized.doubleValue, is(5.0));
     }
 
     @Test

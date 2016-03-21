@@ -3,7 +3,7 @@ package com.github.gfx.static_gson.model;
 import com.github.gfx.static_gson.annotation.JsonSerializable;
 
 @JsonSerializable
-public class ModelWithBasicTypes {
+public class ModelWithSimpleTypes {
 
     public boolean booleanValue;
 
@@ -24,11 +24,11 @@ public class ModelWithBasicTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ModelWithBasicTypes)) {
+        if (!(o instanceof ModelWithSimpleTypes)) {
             return false;
         }
 
-        ModelWithBasicTypes that = (ModelWithBasicTypes) o;
+        ModelWithSimpleTypes that = (ModelWithSimpleTypes) o;
 
         if (booleanValue != that.booleanValue) {
             return false;

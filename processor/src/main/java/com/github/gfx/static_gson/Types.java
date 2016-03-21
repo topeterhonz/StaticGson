@@ -24,6 +24,6 @@ public class Types {
     public static final ClassName TypeAdapter = ClassName.get(TypeAdapter.class);
 
     public static ParameterizedTypeName getTypeAdapter(TypeName type) {
-        return ParameterizedTypeName.get(TypeAdapter, type);
+        return ParameterizedTypeName.get(TypeAdapter, type.box());
     }
 }

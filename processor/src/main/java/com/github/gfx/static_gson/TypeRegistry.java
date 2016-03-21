@@ -48,7 +48,7 @@ public class TypeRegistry {
     }
 
     private static String toName(TypeName type) {
-        return type.toString().replaceAll("[^a-zA-Z0-9?]+", "\\$");
+        return "$" + type.toString().replaceAll("[^a-zA-Z0-9?]+", "\\$");
     }
 
     public FieldSpec getField(TypeName type) {
