@@ -25,9 +25,7 @@ public class TypeRegistry {
     }
 
     private static CodeBlock toInitializer(TypeName type) {
-        return CodeBlock.builder()
-                .add("gson.getAdapter($T.get($L))", Types.TypeToken, toTypeExpr(type))
-                .build();
+        return CodeBlock.of("gson.getAdapter($T.get($L))", Types.TypeToken, toTypeExpr(type));
     }
 
     private static CodeBlock toTypeExpr(TypeName type) {
@@ -42,14 +40,10 @@ public class TypeRegistry {
                     typeArgsExpr.add("$L", toTypeExpr(t));
                 }
             }
-            return CodeBlock.builder()
-                    .add("$T.newParameterizedTypeWithOwner(null, $T.class, $L)",
-                            Types.$Gson$Types, parameterizedType.rawType, typeArgsExpr.build())
-                    .build();
+            return CodeBlock.of("$T.newParameterizedTypeWithOwner(null, $T.class, $L)",
+                            Types.$Gson$Types, parameterizedType.rawType, typeArgsExpr.build());
         } else {
-            return CodeBlock.builder()
-                    .add("$T.class", type)
-                    .build();
+            return CodeBlock.of("$T.class", type);
         }
     }
 
