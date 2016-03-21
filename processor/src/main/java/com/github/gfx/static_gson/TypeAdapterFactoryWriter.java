@@ -14,6 +14,7 @@ import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
+import javax.annotation.processing.Filer;
 import javax.lang.model.element.Modifier;
 
 public class TypeAdapterFactoryWriter {
@@ -135,9 +136,13 @@ public class TypeAdapterFactoryWriter {
 
     public void write() {
         try {
-            buildJavaFile().writeTo(context.processingEnv.getFiler());
+            buildJavaFile().writeTo(getSynchronizedFiler());
         } catch (IOException e) {
             throw new ProcessingException(e);
         }
+    }
+
+    public Filer getSynchronizedFiler() {
+        return new SynchronizedFiler(context.processingEnv.getFiler());
     }
 }

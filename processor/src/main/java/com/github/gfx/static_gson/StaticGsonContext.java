@@ -20,4 +20,8 @@ public class StaticGsonContext {
         this.roundEnv = roundEnv;
         this.processingEnv = processingEnv;
     }
+
+    public void addModel(ModelDefinition model) {
+        modelMap.put(model.modelType, model);
+    }
 }

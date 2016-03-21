@@ -27,23 +27,18 @@ public class StaticGsonProcessor extends AbstractProcessor {
         StaticGsonContext context = new StaticGsonContext(roundEnv, processingEnv);
 
         roundEnv.getElementsAnnotatedWith(JsonSerializable.class)
-                .forEach(element -> {
-                    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                            "[StaticGson] processing " + element);
+                .stream()
+                .map(element -> new ModelDefinition(context, (TypeElement) element))
+                .forEach(context::addModel);
 
-                    ModelDefinition model = new ModelDefinition(context, (TypeElement) element);
+        context.modelMap.values()
+                .parallelStream()
+                .map(model -> new TypeAdapterFactoryWriter(context, model))
+                .forEach(TypeAdapterFactoryWriter::write);
 
-                    context.modelMap.put(model.modelType, model);
-                });
-
-        for (ModelDefinition model : context.modelMap.values()) {
-            new TypeAdapterFactoryWriter(context, model).write();
-        }
-
-        if (!context.modelMap.isEmpty()) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                    "[StaticGson] finished in " + (System.currentTimeMillis() - t0) + "ms");
-        }
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                "[StaticGson] processed " + context.modelMap.size() + " of models in "
+                        + (System.currentTimeMillis() - t0) + "ms");
 
         return true;
     }
