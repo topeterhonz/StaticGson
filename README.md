@@ -6,8 +6,8 @@ This library makes [Gson](https://github.com/google/gson) faster by generating `
 
 ```gradle
 dependencies {
-    apt 'com.github.gfx.static_gson:static-gson-processor:0.9.4'
-    compile 'com.github.gfx.static_gson:static-gson:0.9.4'
+    apt 'com.github.gfx.static_gson:static-gson-processor:0.9.5'
+    compile 'com.github.gfx.static_gson:static-gson:0.9.5'
 }
 ```
 
