@@ -8,7 +8,6 @@ dependencies {
     compile 'com.google.code.gson:gson:2.6.2'
     testCompile project(':processor')
     testCompile 'junit:junit:4.12'
-    testCompile 'org.hamcrest:hamcrest-library:1.3'
 }
 
 publish {

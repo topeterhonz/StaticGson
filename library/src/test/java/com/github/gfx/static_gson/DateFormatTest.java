@@ -12,8 +12,8 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.TimeZone;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.core.Is.is;
 
 public class DateFormatTest {
 

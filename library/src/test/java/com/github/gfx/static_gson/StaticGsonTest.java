@@ -17,8 +17,8 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
 
 /**
  * @see StaticGsonTypeAdapterFactory
@@ -99,7 +99,7 @@ public class StaticGsonTest {
         ModelWithBoxTypes deserialized = gson.fromJson(serialized, ModelWithBoxTypes.class);
 
         assertThat(deserialized.booleanValue, is(true));
-        assertThat(deserialized.shortValue, is((short)1));
+        assertThat(deserialized.shortValue, is((short) 1));
         assertThat(deserialized.intValue, is(2));
         assertThat(deserialized.longValue, is(3L));
         assertThat(deserialized.floatValue, is(4.0f));

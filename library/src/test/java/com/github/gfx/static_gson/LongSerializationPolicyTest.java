@@ -9,16 +9,10 @@ import com.github.gfx.static_gson.annotation.JsonSerializable;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.core.Is.is;
 
 public class LongSerializationPolicyTest {
-
-    @JsonSerializable
-    static class L {
-
-        long value;
-    }
 
     Gson gson;
 
@@ -35,5 +29,11 @@ public class LongSerializationPolicyTest {
         L model = new L();
         model.value = Long.MAX_VALUE;
         assertThat(gson.toJson(model), is("{\"value\":\"" + Long.MAX_VALUE + "\"}"));
+    }
+
+    @JsonSerializable
+    static class L {
+
+        long value;
     }
 }

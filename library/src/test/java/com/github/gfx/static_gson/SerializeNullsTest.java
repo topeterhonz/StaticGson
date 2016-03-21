@@ -8,8 +8,8 @@ import com.github.gfx.static_gson.annotation.JsonSerializable;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
 
 public class SerializeNullsTest {
 
