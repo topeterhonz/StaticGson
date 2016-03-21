@@ -18,12 +18,6 @@ public class TypeRegistry {
     public TypeRegistry() {
     }
 
-    private static FieldSpec createField(TypeName type) {
-        return FieldSpec.builder(Types.getTypeAdapter(type), toName(type))
-                .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
-                .build();
-    }
-
     private static CodeBlock toInitializer(TypeName type) {
         return CodeBlock.of("gson.getAdapter($T.get($L))", Types.TypeToken, toTypeExpr(type));
     }
@@ -52,12 +46,15 @@ public class TypeRegistry {
     }
 
     public FieldSpec getField(TypeName type) {
-        FieldSpec field = registry.get(type);
-        if (field == null) {
-            field = createField(type);
-            registry.put(type, field);
-        }
-        return field;
+        return registry.compute(type, (typeName, fieldSpec) -> {
+            if (fieldSpec == null) {
+                return FieldSpec.builder(Types.getTypeAdapter(typeName), toName(typeName))
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build();
+            } else {
+                return fieldSpec;
+            }
+        });
     }
 
     public Collection<FieldSpec> getFields() {
