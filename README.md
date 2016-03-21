@@ -2,11 +2,39 @@
 
 This library makes [Gson](https://github.com/google/gson) faster by generating `TypeAapterFactory` with annotation processing. In other words, this is an AOT compiler for Gson.
 
-## Gradle Dependencies
+## Getting Started
+
+For Android apps:
+
+```gradle
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
+    }
+}
+
+apply plugin: 'com.neenbedankt.android-apt'
+
+repositories {
+    jcenter()
+}
+
+// ...
+
+dependencies {
+    apt 'com.github.gfx.static_gson:static-gson-processor:0.9.6'
+    compile 'com.github.gfx.static_gson:static-gson:0.9.6'
+}
+```
+
+For Java apps with Gradle 2.12+:
 
 ```gradle
 dependencies {
-    apt 'com.github.gfx.static_gson:static-gson-processor:0.9.6'
+    compileOnly 'com.github.gfx.static_gson:static-gson-processor:0.9.6'
     compile 'com.github.gfx.static_gson:static-gson:0.9.6'
 }
 ```
@@ -56,3 +84,30 @@ D/XXX     : start benchmarking LoganSquare
 D/XXX     : LoganSquare in serialization: 111ms
 D/XXX     : LoganSquare in deserialization: 268ms
 ```
+
+## Support
+
+* Use [GitHub issues](https://github.com/gfx/StaticGson/issues) for the issue tracker
+* Feel free to ask for questions to the author [@\_\_gfx\_\_](https://twitter.com/__gfx__)
+
+## Release Engineering for Maintainers
+
+```shell
+./gradlew bumpMajor # or bumpMinor / bumpPatch
+git add -va
+make publish # run tests, build artifacts, publish to jcenter, and make a tag
+```
+
+## Author
+
+FUJI Goro ([gfx](https://github.com/gfx)).
+
+## License
+
+Copyright (c) 2015 FUJI Goro (gfx).
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
