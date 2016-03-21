@@ -17,32 +17,40 @@ public class SynchronizedFiler implements Filer {
     }
 
     @Override
-    public synchronized JavaFileObject createSourceFile(CharSequence name,
+    public JavaFileObject createSourceFile(CharSequence name,
             Element... originatingElements)
             throws IOException {
-        return parent.createSourceFile(name, originatingElements);
+        synchronized (parent) {
+            return parent.createSourceFile(name, originatingElements);
+        }
     }
 
     @Override
-    public synchronized JavaFileObject createClassFile(CharSequence name,
+    public JavaFileObject createClassFile(CharSequence name,
             Element... originatingElements)
             throws IOException {
-        return parent.createClassFile(name, originatingElements);
+        synchronized (parent) {
+            return parent.createClassFile(name, originatingElements);
+        }
     }
 
     @Override
-    public synchronized FileObject createResource(JavaFileManager.Location location,
+    public FileObject createResource(JavaFileManager.Location location,
             CharSequence pkg,
             CharSequence relativeName,
             Element... originatingElements)
             throws IOException {
-        return parent.createResource(location, pkg, relativeName, originatingElements);
+        synchronized (parent) {
+            return parent.createResource(location, pkg, relativeName, originatingElements);
+        }
     }
 
     @Override
-    public synchronized FileObject getResource(JavaFileManager.Location location,
+    public FileObject getResource(JavaFileManager.Location location,
             CharSequence pkg,
             CharSequence relativeName) throws IOException {
-        return parent.getResource(location, pkg, relativeName);
+        synchronized (parent) {
+            return parent.getResource(location, pkg, relativeName);
+        }
     }
 }
