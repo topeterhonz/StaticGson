@@ -2,6 +2,7 @@ package com.github.gfx.static_gson.annotation;
 
 
 import com.google.gson.FieldNamingPolicy;
+import com.google.gson.GsonBuilder;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -19,5 +20,10 @@ public @interface JsonSerializable {
 
     FieldNamingPolicy fieldNamingPolicy() default FieldNamingPolicy.IDENTITY;
 
+    /**
+     * You must set {@link GsonBuilder#serializeNulls()} to make this option work.
+     *
+     * @return If {@code true}, {@code Gson} serializes null fields
+     */
     boolean serializeNulls() default false;
 }

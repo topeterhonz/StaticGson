@@ -19,16 +19,30 @@ public class SerializeNullsTest {
     public void setUp() throws Exception {
         gson = new GsonBuilder()
                 .registerTypeAdapterFactory(StaticGsonTypeAdapterFactory.newInstance())
+                .serializeNulls()
                 .create();
     }
 
     @Test
-    public void testName() throws Exception {
-        assertThat(gson.toJson(new Foo()), is("{}"));
+    public void serializedNullsIsTrue() throws Exception {
+        assertThat(gson.toJson(new SerializedNullsIsTrue()), is("{\"foo\":null,\"bar\":null}"));
+    }
+
+    @Test
+    public void serializedNullsIsFalse() throws Exception {
+        assertThat(gson.toJson(new SerializedNullsIsFalse()), is("{}"));
     }
 
     @JsonSerializable(serializeNulls = true)
-    public static class Foo {
+    public static class SerializedNullsIsTrue {
+
+        public String foo;
+
+        public Integer bar;
+    }
+
+    @JsonSerializable(serializeNulls = false)
+    public static class SerializedNullsIsFalse {
 
         public String foo;
 
