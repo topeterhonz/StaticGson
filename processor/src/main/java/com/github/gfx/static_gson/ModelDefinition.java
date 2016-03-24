@@ -35,9 +35,7 @@ public class ModelDefinition {
 
         fields = new ArrayList<>();
         if (!element.getSuperclass().toString().equals(Object.class.toString())) {
-            TypeElement superclassElement = context.processingEnv.getElementUtils()
-                    .getTypeElement(element.getSuperclass().toString());
-            fields.addAll(extractFields(annotation, superclassElement));
+            fields.addAll(extractFields(annotation, context.getTypeElement(element.getSuperclass())));
         }
 
         fields.addAll(extractFields(annotation, element));

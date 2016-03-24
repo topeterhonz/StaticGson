@@ -136,13 +136,9 @@ public class TypeAdapterFactoryWriter {
 
     public void write() {
         try {
-            buildJavaFile().writeTo(getSynchronizedFiler());
+            buildJavaFile().writeTo(context.getSynchronizedFiler());
         } catch (IOException e) {
             throw new ProcessingException(e);
         }
-    }
-
-    public Filer getSynchronizedFiler() {
-        return new SynchronizedFiler(context.processingEnv.getFiler());
     }
 }

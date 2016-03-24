@@ -10,10 +10,7 @@ import com.squareup.javapoet.TypeName;
 
 public class Types {
 
-    public static final String PACKAGE_NAME = "com.github.gfx.static_gson";
-
-    public static final ClassName StaticGsonTypeAdapterFactory
-            = ClassName.get(PACKAGE_NAME, "StaticGsonTypeAdapterFactory");
+    public static final ClassName StaticGsonTypeAdapterFactory = ClassName.get(StaticGsonTypeAdapterFactory.class);
 
     public static final ClassName String = ClassName.get(String.class);
 
