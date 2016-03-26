@@ -18,7 +18,7 @@ public class StaticGsonTypeAdapterFactory implements TypeAdapterFactory {
     }
 
     public static String getTypeAdapterFactoryName(String modelClassName) {
-        return modelClassName + "$StaticGsonTypeAdapter";
+        return modelClassName + "_StaticGsonTypeAdapter";
     }
 
     @SuppressWarnings("unchecked")
