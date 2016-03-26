@@ -25,8 +25,8 @@ repositories {
 // ...
 
 dependencies {
-    apt 'com.github.gfx.static_gson:static-gson-processor:0.9.6'
-    compile 'com.github.gfx.static_gson:static-gson:0.9.6'
+    apt 'com.github.gfx.static_gson:static-gson-processor:0.9.7'
+    compile 'com.github.gfx.static_gson:static-gson:0.9.7'
 }
 ```
 
@@ -34,8 +34,8 @@ For Java apps with Gradle 2.12+:
 
 ```gradle
 dependencies {
-    compileOnly 'com.github.gfx.static_gson:static-gson-processor:0.9.6'
-    compile 'com.github.gfx.static_gson:static-gson:0.9.6'
+    compileOnly 'com.github.gfx.static_gson:static-gson-processor:0.9.7'
+    compile 'com.github.gfx.static_gson:static-gson:0.9.7'
 }
 ```
 
