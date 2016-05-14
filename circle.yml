@@ -1,11 +1,13 @@
 machine:
   java:
     version: oraclejdk8
+  environment:
+    TERM: dumb
 dependencies:
   pre:
-      - echo y | android update sdk --no-ui --all --filter "tools"
-      - echo y | android update sdk --no-ui --all --filter "build-tools-23.0.2,android-23"
-      - echo y | android update sdk --no-ui --all --filter "extra-android-m2repository"
+      - echo y | (android -s update sdk -u -t "tools" || true)
+      - echo y | (android -s update sdk -u -t "build-tools-23.0.3,android-23" || true)
+      - echo y | (android -s update sdk -u -t "extra-android-m2repository" || true)
 test:
   override:
-    - TERM=dumb ./gradlew --info check
+    - ./gradlew --info check
