@@ -5,9 +5,9 @@ machine:
     TERM: dumb
 dependencies:
   pre:
-      - echo y | (android -s update sdk -u -t "tools" || true)
-      - echo y | (android -s update sdk -u -t "build-tools-23.0.3,android-23" || true)
-      - echo y | (android -s update sdk -u -t "extra-android-m2repository" || true)
+      - echo y | android -s update sdk -u -a -t "tools"
+      - echo y | android -s update sdk -u -a -t "build-tools-23.0.3,android-23"
+      - echo y | android -s update sdk -u -a -t "extra-android-m2repository"
 test:
   override:
     - ./gradlew --info check
