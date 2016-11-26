@@ -13,7 +13,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedAnnotationTypes("com.github.gfx.static_gson.annotation.JsonSerializable")
+@SupportedAnnotationTypes("com.github.gfx.static_gson.annotation.*")
 public class StaticGsonProcessor extends AbstractProcessor {
 
     @Override
