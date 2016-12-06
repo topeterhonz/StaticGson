@@ -3,6 +3,7 @@ package com.github.gfx.static_gson;
 import com.google.gson.annotations.SerializedName;
 
 import com.github.gfx.static_gson.annotation.JsonSerializable;
+import com.google.gson.stream.JsonToken;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 
@@ -172,24 +173,39 @@ public class FieldDefinition {
             unboxType = type;
         }
         if (unboxType.equals(TypeName.BOOLEAN)) {
+            block.add(buildReadNullValueBlock(reader));
             block.addStatement("$L.$L = $L.nextBoolean()", object, fieldName, reader);
         } else if (unboxType.equals(TypeName.LONG)) {
+            block.add(buildReadNullValueBlock(reader));
             block.addStatement("$L.$L = $L.nextLong()", object, fieldName, reader);
 
         } else if (unboxType.equals(TypeName.INT)
                 || unboxType.equals(TypeName.BYTE) || unboxType.equals(TypeName.SHORT)) {
+            block.add(buildReadNullValueBlock(reader));
             block.addStatement("$L.$L = ($T) $L.nextLong()", object, fieldName, unboxType, reader);
         } else if (unboxType.equals(TypeName.DOUBLE)) {
+            block.add(buildReadNullValueBlock(reader));
             block.addStatement("$L.$L = $L.nextDouble()", object, fieldName, reader);
         } else if (unboxType.equals(TypeName.FLOAT)) {
+            block.add(buildReadNullValueBlock(reader));
             block.addStatement("$L.$L = ($T) $L.nextDouble()", object, fieldName, unboxType, reader);
         } else if (unboxType.equals(Types.String)) {
+            block.add(buildReadNullValueBlock(reader));
             block.addStatement("$L.$L = $L.nextString()", object, fieldName, reader);
         } else {
             block.addStatement("$L.$L = $N.read($L)",
                     object, fieldName, typeRegistry.getField(type), reader);
         }
 
+        return block.build();
+    }
+
+    private CodeBlock buildReadNullValueBlock(String reader) {
+        CodeBlock.Builder block = CodeBlock.builder();
+        block.beginControlFlow("if ($L.peek() == $T.$L)", reader, JsonToken.class, JsonToken.NULL);
+        block.addStatement("$L.nextNull()", reader);
+        block.addStatement("break");
+        block.endControlFlow();
         return block.build();
     }
 
