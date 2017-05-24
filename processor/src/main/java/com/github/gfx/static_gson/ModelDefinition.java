@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.tools.Diagnostic;
 
 public class ModelDefinition {
 
@@ -34,22 +36,34 @@ public class ModelDefinition {
         JsonSerializable annotation = element.getAnnotation(JsonSerializable.class);
 
         fields = new ArrayList<>();
-        if (!element.getSuperclass().toString().equals(Object.class.toString())) {
-            fields.addAll(extractFields(annotation, context.getTypeElement(element.getSuperclass())));
-        }
 
-        fields.addAll(extractFields(annotation, element));
+        while (true) {
+            fields.addAll(extractFields(annotation, element));
+            if (element.getSuperclass().toString().equals(Object.class.getName())) {
+                // reached the root
+                break;
+            }
+
+            TypeElement superElement = context.getTypeElement(element.getSuperclass());
+
+            if (superElement == null) {
+                context.processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                        String.format("Unable create static gson for %s. Perhaps this is a generic type which is not supported yet", element.getSuperclass().toString()));
+                break;
+            }
+
+            element = superElement;
+        }
     }
 
     private static List<FieldDefinition> extractFields(
             JsonSerializable config,
             TypeElement typeElement) {
+
         return typeElement.getEnclosedElements().stream()
                 .filter(element -> element instanceof VariableElement)
                 .map(element -> (VariableElement) element)
                 .filter(element -> !element.getModifiers().contains(Modifier.TRANSIENT))
-                .filter(element -> !element.getModifiers().contains(Modifier.FINAL))
-                .filter(element -> !element.getModifiers().contains(Modifier.PRIVATE)) // FIXME: use accessors
                 .filter(element -> !element.getModifiers().contains(Modifier.STATIC))
                 .map(element -> new FieldDefinition(config, element))
                 .collect(Collectors.toList());

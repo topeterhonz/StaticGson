@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 /**
  * A marker to generate static gson type adapters.
  *
- * There are options that is a subset of {@link com.google.gson.GsonBuilder}.
+ * There are options that is a subset of {@link GsonBuilder}.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)

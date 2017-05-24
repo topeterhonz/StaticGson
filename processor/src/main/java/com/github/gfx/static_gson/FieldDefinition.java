@@ -1,20 +1,33 @@
 package com.github.gfx.static_gson;
 
-import com.google.gson.annotations.SerializedName;
-
+import com.github.gfx.static_gson.annotation.JsonMustSet;
 import com.github.gfx.static_gson.annotation.JsonSerializable;
+import com.github.gfx.static_gson.annotation.JsonStrict;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonToken;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.tools.Diagnostic;
 
 public class FieldDefinition {
+
+    private static final String NONNULL_ANNOTATION_NAME = "NonNull";
+    private static final String NOTNULL_ANNOTATION_NAME = "NotNull";
 
     private final JsonSerializable config;
 
@@ -27,6 +40,13 @@ public class FieldDefinition {
     private final String serializedName;
 
     private final List<String> serializedNameCandidates;
+
+    private final boolean strict;
+
+    private final boolean nonNull;
+
+    private final boolean mustSet;
+
 
     public FieldDefinition(JsonSerializable config, VariableElement element) {
         this.config = config;
@@ -44,6 +64,9 @@ public class FieldDefinition {
             serializedName = translateName(fieldName);
             serializedNameCandidates.add(serializedName);
         }
+        strict = element.getAnnotation(JsonStrict.class) != null;
+        mustSet = element.getAnnotation(JsonMustSet.class) != null;
+        nonNull = hasAnnotationWithName(element, NONNULL_ANNOTATION_NAME) || hasAnnotationWithName(element, NOTNULL_ANNOTATION_NAME);
     }
 
     private static String separateCamelCase(String name, String separator) {
@@ -162,41 +185,193 @@ public class FieldDefinition {
      * @param typeRegistry A type registry for the model type
      * @param object       A name of the target object
      * @param reader       A {@link com.google.gson.stream.JsonReader} instance
+     * @param className
+     * @param context
      * @return An expression to read the field
      */
-    public CodeBlock buildReadCodeBlock(TypeRegistry typeRegistry, String object, String reader) {
+    public CodeBlock buildReadCodeBlock(TypeRegistry typeRegistry, String object, String reader, String className, StaticGsonContext context) {
+
+        // check private
         CodeBlock.Builder block = CodeBlock.builder();
+
         TypeName unboxType;
         try {
             unboxType = type.unbox();
         } catch (UnsupportedOperationException e) {
             unboxType = type;
         }
-        if (unboxType.equals(TypeName.BOOLEAN)) {
-            block.add(buildReadNullValueBlock(reader));
-            block.addStatement("$L.$L = $L.nextBoolean()", object, fieldName, reader);
-        } else if (unboxType.equals(TypeName.LONG)) {
-            block.add(buildReadNullValueBlock(reader));
-            block.addStatement("$L.$L = $L.nextLong()", object, fieldName, reader);
 
-        } else if (unboxType.equals(TypeName.INT)
-                || unboxType.equals(TypeName.BYTE) || unboxType.equals(TypeName.SHORT)) {
-            block.add(buildReadNullValueBlock(reader));
-            block.addStatement("$L.$L = ($T) $L.nextLong()", object, fieldName, unboxType, reader);
-        } else if (unboxType.equals(TypeName.DOUBLE)) {
-            block.add(buildReadNullValueBlock(reader));
-            block.addStatement("$L.$L = $L.nextDouble()", object, fieldName, reader);
-        } else if (unboxType.equals(TypeName.FLOAT)) {
-            block.add(buildReadNullValueBlock(reader));
-            block.addStatement("$L.$L = ($T) $L.nextDouble()", object, fieldName, unboxType, reader);
-        } else if (unboxType.equals(Types.String)) {
-            block.add(buildReadNullValueBlock(reader));
-            block.addStatement("$L.$L = $L.nextString()", object, fieldName, reader);
+        block.add(buildReadNullValueBlock(reader));
+
+        block.beginControlFlow("try");
+
+        if (element.getModifiers().contains(Modifier.PRIVATE)) {
+
+            block.addStatement("$T f = $L.getClass().getDeclaredField($S)", Field.class, object, fieldName);
+            block.addStatement("f.setAccessible(true)");
+
+            if (unboxType.equals(TypeName.BOOLEAN)) {
+                block.addStatement("f.set($L, $L.nextBoolean())", object, reader);
+            } else if (unboxType.equals(TypeName.LONG)) {
+                block.addStatement("f.set($L, $L.nextLong())", object, reader);
+            } else if (unboxType.equals(TypeName.INT)
+                    || unboxType.equals(TypeName.BYTE)
+                    || unboxType.equals(TypeName.SHORT)) {
+                block.addStatement("f.set($L, ($T) $L.nextLong())", object, unboxType, reader);
+            } else if (unboxType.equals(TypeName.DOUBLE)) {
+                block.addStatement("f.set($L, $L.nextDouble())", object, reader);
+            } else if (unboxType.equals(TypeName.FLOAT)) {
+                block.addStatement("f.set($L, ($T) $L.nextDouble())", object, unboxType, reader);
+            } else if (unboxType.equals(Types.String)) {
+                block.addStatement("f.set($L, $L.nextString())", object, reader);
+            } else {
+                checkFieldTypeJsonSerializable(className, context);
+                block.addStatement("f.set($L, $N.read($L))",
+                        object, typeRegistry.getField(type), reader);
+            }
+
         } else {
-            block.addStatement("$L.$L = $N.read($L)",
-                    object, fieldName, typeRegistry.getField(type), reader);
+            if (unboxType.equals(TypeName.BOOLEAN)) {
+                block.addStatement("$L.$L = $L.nextBoolean()", object, fieldName, reader);
+            } else if (unboxType.equals(TypeName.LONG)) {
+                block.addStatement("$L.$L = $L.nextLong()", object, fieldName, reader);
+            } else if (unboxType.equals(TypeName.INT)
+                    || unboxType.equals(TypeName.BYTE)
+                    || unboxType.equals(TypeName.SHORT)) {
+                block.addStatement("$L.$L = ($T) $L.nextLong()", object, fieldName, unboxType, reader);
+            } else if (unboxType.equals(TypeName.DOUBLE)) {
+                block.addStatement("$L.$L = $L.nextDouble()", object, fieldName, reader);
+            } else if (unboxType.equals(TypeName.FLOAT)) {
+                block.addStatement("$L.$L = ($T) $L.nextDouble()", object, fieldName, unboxType, reader);
+            } else if (unboxType.equals(Types.String)) {
+                block.addStatement("$L.$L = $L.nextString()", object, fieldName, reader);
+            } else {
+                checkFieldTypeJsonSerializable(className, context);
+                block.addStatement("$L.$L = $N.read($L)",
+                        object, fieldName, typeRegistry.getField(type), reader);
+            }
         }
 
+        block.add(buildMustSetFlagCodeBlock());
+
+        if (element.getModifiers().contains(Modifier.PRIVATE)) {
+            block.nextControlFlow("catch ($T|$T ex)", NoSuchFieldException.class, IllegalAccessException.class);
+        }
+        block.nextControlFlow("catch ($T ex)", Exception.class);
+
+        if (!type.isBoxedPrimitive() && !type.isPrimitive() && !unboxType.equals(Types.String)) {
+            // the value could be skipped already when parsing child object
+            block.beginControlFlow("if (!(ex instanceof $T))", JsonGracefulException.class);
+            block.addStatement("$L.skipValue()", reader);
+            block.endControlFlow();
+        } else {
+            block.addStatement("$L.skipValue()", reader);
+        }
+
+        if (strict || nonNull || mustSet) {
+            block.addStatement("reader.endObject()");
+            block.addStatement("throw ex");
+        } else {
+            ClassName log = ClassName.get("com.github.gfx.static_gson", "Logger");
+            block.addStatement("$T.log(ex)", log);
+        }
+        block.endControlFlow();
+
+        return block.build();
+    }
+
+    private void checkFieldTypeJsonSerializable(String className, StaticGsonContext context) {
+        TypeName checkType;
+        if (type instanceof ParameterizedTypeName) {
+            ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) type;
+            if (parameterizedTypeName.rawType.simpleName().equals(List.class.getSimpleName())) {
+                checkType = parameterizedTypeName.typeArguments.get(0);
+            } else if (parameterizedTypeName.rawType.simpleName().equals(Map.class.getSimpleName())) {
+                checkType = parameterizedTypeName.typeArguments.get(1);
+            } else {
+                checkType = type;
+            }
+        } else {
+            checkType = type;
+        }
+
+
+        if (checkType.isPrimitive()
+                || checkType.isBoxedPrimitive()
+                || checkType.equals(Types.String)
+                || checkType.equals(Types.Date)
+                || checkType.equals(Types.Calendar)
+                || checkType.equals(Types.Object)) {
+            // ignore primitive and strings
+            return;
+        }
+
+        TypeElement typeElement = context.getTypeElement(checkType.toString());
+
+        if (typeElement == null) {
+            return;
+        }
+
+        // ignore enum
+        if (typeElement.getKind() == ElementKind.ENUM) {
+            return;
+        }
+
+        boolean jsonSerializable = typeElement.getAnnotation(JsonSerializable.class) != null;
+
+        if (!jsonSerializable) {
+            context.processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                    String.format("%s at %s.%s must be annotated with @JsonSerializable", type.toString(), className, fieldName));
+        }
+    }
+
+    public CodeBlock buildNullCheckCodeBlock(String className, String object) {
+        CodeBlock.Builder block = CodeBlock.builder();
+        if (nonNull && !type.isPrimitive()) {
+            if (element.getModifiers().contains(Modifier.PRIVATE)) {
+                block.beginControlFlow("try");
+                String field = "field$" + fieldName;
+                block.addStatement("$T $L = $L.getClass().getDeclaredField($S)", Field.class, field, object, fieldName);
+                block.addStatement("$L.setAccessible(true)", field);
+                block.beginControlFlow("if ($L.get($L) == null)", field, object);
+
+                block.addStatement("throw new $T(\"$L.$L must not be null\")", JsonGracefulException.class, className, fieldName);
+                block.endControlFlow();
+                block.nextControlFlow("catch ($T|$T ex)", NoSuchFieldException.class, IllegalAccessException.class);
+                block.endControlFlow();
+
+            } else {
+                block.beginControlFlow("if ($L.$L == null)", object, fieldName);
+                block.addStatement("throw new $T(\"$L.$L must not be null\")", JsonGracefulException.class, className, fieldName);
+                block.endControlFlow();
+            }
+        }
+        return block.build();
+    }
+
+    public CodeBlock buildMustDeclareFlagCodeBlock() {
+        CodeBlock.Builder block = CodeBlock.builder();
+        if (mustSet && type.isPrimitive()) {
+            block.addStatement("boolean $LSet = false", fieldName);
+        }
+        return block.build();
+    }
+
+    public CodeBlock buildMustSetFlagCodeBlock() {
+        CodeBlock.Builder block = CodeBlock.builder();
+        if (mustSet && type.isPrimitive()) {
+            block.addStatement("$LSet = true", fieldName);
+        }
+        return block.build();
+    }
+
+    public CodeBlock buildMustSetCheckFlagCodeBlock(String className) {
+        CodeBlock.Builder block = CodeBlock.builder();
+        if (mustSet && type.isPrimitive()) {
+            block.beginControlFlow("if (!$LSet)", fieldName);
+            block.addStatement("throw new $T(\"$L.$L must be set\")", JsonGracefulException.class, className, fieldName);
+            block.endControlFlow();
+        }
         return block.build();
     }
 
@@ -222,5 +397,15 @@ public class FieldDefinition {
             default: // IDENTITY
                 return name;
         }
+    }
+
+    private static boolean hasAnnotationWithName(VariableElement element, String simpleName) {
+        for (AnnotationMirror mirror : element.getAnnotationMirrors()) {
+            String annotationName = mirror.getAnnotationType().asElement().getSimpleName().toString();
+            if (simpleName.equals(annotationName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

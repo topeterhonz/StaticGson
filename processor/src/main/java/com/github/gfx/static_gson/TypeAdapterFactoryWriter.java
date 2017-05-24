@@ -1,9 +1,10 @@
 package com.github.gfx.static_gson;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -14,7 +15,6 @@ import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
-import javax.annotation.processing.Filer;
 import javax.lang.model.element.Modifier;
 
 public class TypeAdapterFactoryWriter {
@@ -29,12 +29,15 @@ public class TypeAdapterFactoryWriter {
 
     private final ParameterizedTypeName typeAdapter;
 
+    private final ParameterizedTypeName objectConstructor;
+
     public TypeAdapterFactoryWriter(StaticGsonContext context, ModelDefinition model) {
         this.context = context;
         this.model = model;
         typeAdapter = Types.getTypeAdapter(model.modelType);
         typeToken = ParameterizedTypeName.get(Types.TypeToken, model.modelType);
         typeAdapterClassName = createTypeAdapterClassName(model.modelType);
+        objectConstructor = ParameterizedTypeName.get(ClassName.get("com.google.gson.internal", "ObjectConstructor"), model.modelType);
     }
 
     static String createTypeAdapterClassName(ClassName modelType) {
@@ -59,12 +62,16 @@ public class TypeAdapterFactoryWriter {
             typeAdapterClass.addField(model.typeRegistry.getField(type));
         }
 
+        typeAdapterClass.addField(objectConstructor, "objectConstructor", Modifier.FINAL, Modifier.PRIVATE);
+
         typeAdapterClass.addMethod(MethodSpec.constructorBuilder()
                 .addAnnotation(Annotations.suppressWarnings("unchecked"))
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(Gson.class, "gson")
                 .addParameter(typeToken, "typeToken")
+                .addParameter(objectConstructor, "objectConstructor")
                 .addCode(model.typeRegistry.getFieldInitialization())
+                .addStatement("this.objectConstructor = objectConstructor")
                 .build());
 
         typeAdapterClass.addMethod(buildWriteMethod());
@@ -85,9 +92,10 @@ public class TypeAdapterFactoryWriter {
                 .addParameter(model.modelType, "value");
 
         method.addStatement("writer.beginObject()");
-        for (FieldDefinition field : model.getFields()) {
-            method.addCode(field.buildWriteBlock(model.typeRegistry, "value", "writer"));
-        }
+// ignore writes
+//        for (FieldDefinition field : model.getFields()) {
+//            method.addCode(field.buildWriteBlock(model.typeRegistry, "value", "writer"));
+//        }
         method.addStatement("writer.endObject()");
 
         return method.build();
@@ -104,16 +112,35 @@ public class TypeAdapterFactoryWriter {
                 .addException(IOException.class)
                 .addParameter(JsonReader.class, "reader");
 
-        method.addStatement("$T object = new $T()", model.modelType, model.modelType);
+        // allow null
+        method.beginControlFlow("if (reader.peek() == $T.$L)", JsonToken.class, JsonToken.NULL);
+        method.addStatement("reader.nextNull()");
+        method.addStatement("return null");
+        method.endControlFlow(); // if
+
+//        // check type
+//        method.beginControlFlow("if (reader.peek() != $T.$L)", JsonToken.class, JsonToken.BEGIN_OBJECT);
+//        method.addStatement("reader.skipValue()");
+//        method.addStatement("return null");
+//        method.endControlFlow(); // if
+
+        method.addStatement("$T object = objectConstructor.construct()", model.modelType);
+
+        // NonNull checks
+        for (FieldDefinition field : model.getFields()) {
+            method.addCode(field.buildMustDeclareFlagCodeBlock());
+        }
+
 
         method.addStatement("reader.beginObject()");
         method.beginControlFlow("while (reader.hasNext())");
         method.beginControlFlow("switch (reader.nextName())");
+        String objectName = "object";
         for (FieldDefinition field : model.getFields()) {
             for (String name : field.getSerializedNameCandidates()) {
                 method.addCode("case $S:\n", name);
             }
-            method.addCode(field.buildReadCodeBlock(model.typeRegistry, "object", "reader"));
+            method.addCode(field.buildReadCodeBlock(model.typeRegistry, objectName, "reader", model.modelType.reflectionName(), context));
             method.addStatement("break");
         }
         method.addCode("default:\n");
@@ -122,6 +149,12 @@ public class TypeAdapterFactoryWriter {
         method.endControlFlow(); // switch
         method.endControlFlow(); // while
         method.addStatement("reader.endObject()");
+
+        // NonNull checks
+        for (FieldDefinition field : model.getFields()) {
+            method.addCode(field.buildNullCheckCodeBlock(model.modelType.simpleName(), objectName));
+            method.addCode(field.buildMustSetCheckFlagCodeBlock(model.modelType.simpleName()));
+        }
 
         method.addStatement("return object", model.modelType);
 

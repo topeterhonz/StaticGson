@@ -1,5 +1,5 @@
 apply plugin: 'java'
-apply plugin: 'com.novoda.bintray-release'
+//apply plugin: 'com.novoda.bintray-release'
 
 targetCompatibility = JavaVersion.VERSION_1_8
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -17,14 +17,14 @@ dependencies {
     testCompile 'com.google.testing.compile:compile-testing:0.9'
 }
 
-publish {
-    artifactId = 'static-gson-processor'
-    desc = 'Annotation processor for StaticGson'
-
-    def metadata = rootProject.ext.metadata
-    groupId = metadata.groupId
-    publishVersion = metadata.version
-    website = metadata.website
-    repository = metadata.repository
-    licences = metadata.licences
-}
+//publish {
+//    artifactId = 'static-gson-processor'
+//    desc = 'Annotation processor for StaticGson'
+//
+//    def metadata = rootProject.ext.metadata
+//    groupId = metadata.groupId
+//    publishVersion = metadata.version
+//    website = metadata.website
+//    repository = metadata.repository
+//    licences = metadata.licences
+//}
