@@ -92,10 +92,9 @@ public class TypeAdapterFactoryWriter {
                 .addParameter(model.modelType, "value");
 
         method.addStatement("writer.beginObject()");
-// ignore writes
-//        for (FieldDefinition field : model.getFields()) {
-//            method.addCode(field.buildWriteBlock(model.typeRegistry, "value", "writer"));
-//        }
+        for (FieldDefinition field : model.getFields()) {
+            method.addCode(field.buildWriteBlock(model.typeRegistry, "value", "writer"));
+        }
         method.addStatement("writer.endObject()");
 
         return method.build();

@@ -1,10 +1,11 @@
 package com.github.gfx.static_gson;
 
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonToken;
+
 import com.github.gfx.static_gson.annotation.JsonMustSet;
 import com.github.gfx.static_gson.annotation.JsonSerializable;
 import com.github.gfx.static_gson.annotation.JsonStrict;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonToken;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -27,6 +28,7 @@ import javax.tools.Diagnostic;
 public class FieldDefinition {
 
     private static final String NONNULL_ANNOTATION_NAME = "NonNull";
+
     private static final String NOTNULL_ANNOTATION_NAME = "NotNull";
 
     private final JsonSerializable config;
@@ -66,7 +68,8 @@ public class FieldDefinition {
         }
         strict = element.getAnnotation(JsonStrict.class) != null;
         mustSet = element.getAnnotation(JsonMustSet.class) != null;
-        nonNull = hasAnnotationWithName(element, NONNULL_ANNOTATION_NAME) || hasAnnotationWithName(element, NOTNULL_ANNOTATION_NAME);
+        nonNull = hasAnnotationWithName(element, NONNULL_ANNOTATION_NAME) || hasAnnotationWithName(element,
+                NOTNULL_ANNOTATION_NAME);
     }
 
     private static String separateCamelCase(String name, String separator) {
@@ -153,21 +156,32 @@ public class FieldDefinition {
      */
     public CodeBlock buildWriteBlock(TypeRegistry typeRegistry, String object, String writer) {
         CodeBlock.Builder block = CodeBlock.builder();
+
+        String field = "field$" + fieldName;
+
+        if (element.getModifiers().contains(Modifier.PRIVATE)) {
+            block.beginControlFlow("try");
+            block.addStatement("$T f = $L.getClass().getDeclaredField($S)", Field.class, object, fieldName);
+            block.addStatement("f.setAccessible(true)");
+            block.addStatement("$T $L = ($T)f.get(value)", element.asType(), field, element.asType());
+        } else {
+            block.addStatement("$T $L = $L.$L", element.asType(), field, object, fieldName);
+        }
+
         if (!type.isPrimitive() && !config.serializeNulls()) {
-            block.beginControlFlow("if ($L.$L != null)", object, fieldName);
+            block.beginControlFlow("if ($L != null)", field);
         }
 
         block.addStatement("$L.name($S)", writer, serializedName);
 
         if (!type.isPrimitive() && config.serializeNulls()) {
-            block.beginControlFlow("if ($L.$L != null)", object, fieldName);
+            block.beginControlFlow("if ($L != null)", field);
         }
 
         if (isSimpleType()) {
-            block.addStatement("$L.value($L.$L)", writer, object, fieldName);
+            block.addStatement("$L.value($L)", writer, field);
         } else {
-            block.addStatement("$N.write($L, $L.$L)",
-                    typeRegistry.getField(type), writer, object, fieldName);
+            block.addStatement("$N.write($L, $L)", typeRegistry.getField(type), writer, field);
         }
 
         if (!type.isPrimitive()) {
@@ -178,6 +192,11 @@ public class FieldDefinition {
                 block.endControlFlow();
             }
         }
+
+        if (element.getModifiers().contains(Modifier.PRIVATE)) {
+            block.nextControlFlow("catch ($T|$T ex)", NoSuchFieldException.class, IllegalAccessException.class);
+            block.endControlFlow();
+        }
         return block.build();
     }
 
@@ -185,11 +204,10 @@ public class FieldDefinition {
      * @param typeRegistry A type registry for the model type
      * @param object       A name of the target object
      * @param reader       A {@link com.google.gson.stream.JsonReader} instance
-     * @param className
-     * @param context
      * @return An expression to read the field
      */
-    public CodeBlock buildReadCodeBlock(TypeRegistry typeRegistry, String object, String reader, String className, StaticGsonContext context) {
+    public CodeBlock buildReadCodeBlock(TypeRegistry typeRegistry, String object, String reader, String className,
+            StaticGsonContext context) {
 
         // check private
         CodeBlock.Builder block = CodeBlock.builder();
@@ -295,7 +313,6 @@ public class FieldDefinition {
             checkType = type;
         }
 
-
         if (checkType.isPrimitive()
                 || checkType.isBoxedPrimitive()
                 || checkType.equals(Types.String)
@@ -321,7 +338,8 @@ public class FieldDefinition {
 
         if (!jsonSerializable) {
             context.processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-                    String.format("%s at %s.%s must be annotated with @JsonSerializable", type.toString(), className, fieldName));
+                    String.format("%s at %s.%s must be annotated with @JsonSerializable", type.toString(), className,
+                            fieldName));
         }
     }
 
@@ -335,14 +353,16 @@ public class FieldDefinition {
                 block.addStatement("$L.setAccessible(true)", field);
                 block.beginControlFlow("if ($L.get($L) == null)", field, object);
 
-                block.addStatement("throw new $T(\"$L.$L must not be null\")", JsonGracefulException.class, className, fieldName);
+                block.addStatement("throw new $T(\"$L.$L must not be null\")", JsonGracefulException.class, className,
+                        fieldName);
                 block.endControlFlow();
                 block.nextControlFlow("catch ($T|$T ex)", NoSuchFieldException.class, IllegalAccessException.class);
                 block.endControlFlow();
 
             } else {
                 block.beginControlFlow("if ($L.$L == null)", object, fieldName);
-                block.addStatement("throw new $T(\"$L.$L must not be null\")", JsonGracefulException.class, className, fieldName);
+                block.addStatement("throw new $T(\"$L.$L must not be null\")", JsonGracefulException.class, className,
+                        fieldName);
                 block.endControlFlow();
             }
         }
