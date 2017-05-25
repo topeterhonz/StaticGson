@@ -1,6 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'me.tatarka.retrolambda'
 //apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'maven'
 
 targetCompatibility = JavaVersion.VERSION_1_8
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -22,14 +23,4 @@ dependencies {
     testCompile 'org.json:json:20160810'
 }
 
-//publish {
-//    artifactId = 'static-gson'
-//    desc = 'Ahead-of-time TypeAdapter<T> generator for Gson'
-//
-//    def metadata = rootProject.ext.metadata
-//    groupId = metadata.groupId
-//    publishVersion = metadata.version
-//    website = metadata.website
-//    repository = metadata.repository
-//    licences = metadata.licences
-//}
+group = 'com.github.topeterhonz'
