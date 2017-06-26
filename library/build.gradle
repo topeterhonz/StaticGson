@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'me.tatarka.retrolambda'
 //apply plugin: 'com.novoda.bintray-release'
 apply plugin: 'maven'
+apply plugin: 'kotlin'
 
 targetCompatibility = JavaVersion.VERSION_1_8
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -15,10 +16,15 @@ buildscript {
         classpath 'me.tatarka:gradle-retrolambda:3.6.1'
     }
 }
+kapt {
+    generateStubs = true
+}
 
 dependencies {
     compile 'com.google.code.gson:gson:2.8.0'
-    testCompile project(':processor')
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+    kaptTest  project(':processor')
     testCompile 'junit:junit:4.12'
     testCompile 'org.json:json:20160810'
 }

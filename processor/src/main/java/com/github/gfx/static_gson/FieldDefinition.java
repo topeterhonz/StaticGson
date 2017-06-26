@@ -11,6 +11,8 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -47,12 +48,17 @@ public class FieldDefinition {
 
     private final boolean nonNull;
 
+    private final boolean nullable;
+
     private final boolean mustSet;
 
+    private final boolean isKotlin;
 
-    public FieldDefinition(JsonSerializable config, VariableElement element) {
+
+    public FieldDefinition(JsonSerializable config, VariableElement element, boolean isKotlin) {
         this.config = config;
         this.element = element;
+        this.isKotlin = isKotlin;
         type = TypeName.get(element.asType());
         fieldName = element.getSimpleName().toString();
         serializedNameCandidates = new ArrayList<>();
@@ -68,8 +74,10 @@ public class FieldDefinition {
         }
         strict = element.getAnnotation(JsonStrict.class) != null;
         mustSet = element.getAnnotation(JsonMustSet.class) != null;
-        nonNull = hasAnnotationWithName(element, NONNULL_ANNOTATION_NAME) || hasAnnotationWithName(element,
-                NOTNULL_ANNOTATION_NAME);
+        nonNull = AnnotationHelper.hasAnnotationWithName(element, NONNULL_ANNOTATION_NAME) || AnnotationHelper
+                .hasAnnotationWithName(element,
+                        NOTNULL_ANNOTATION_NAME);
+        nullable = element.getAnnotation(Nullable.class) != null;
     }
 
     private static String separateCamelCase(String name, String separator) {
@@ -286,7 +294,7 @@ public class FieldDefinition {
             block.addStatement("$L.skipValue()", reader);
         }
 
-        if (strict || nonNull || mustSet) {
+        if (strict || nonNull || mustSet || (isKotlin && !nullable)) {
             block.addStatement("reader.endObject()");
             block.addStatement("throw ex");
         } else {
@@ -345,7 +353,7 @@ public class FieldDefinition {
 
     public CodeBlock buildNullCheckCodeBlock(String className, String object) {
         CodeBlock.Builder block = CodeBlock.builder();
-        if (nonNull && !type.isPrimitive()) {
+        if ((nonNull || isKotlin && !nullable) && !type.isPrimitive()) {
             if (element.getModifiers().contains(Modifier.PRIVATE)) {
                 block.beginControlFlow("try");
                 String field = "field$" + fieldName;
@@ -371,7 +379,7 @@ public class FieldDefinition {
 
     public CodeBlock buildMustDeclareFlagCodeBlock() {
         CodeBlock.Builder block = CodeBlock.builder();
-        if (mustSet && type.isPrimitive()) {
+        if ((mustSet || isKotlin && !nullable) && type.isPrimitive()) {
             block.addStatement("boolean $LSet = false", fieldName);
         }
         return block.build();
@@ -379,7 +387,7 @@ public class FieldDefinition {
 
     public CodeBlock buildMustSetFlagCodeBlock() {
         CodeBlock.Builder block = CodeBlock.builder();
-        if (mustSet && type.isPrimitive()) {
+        if ((mustSet || isKotlin && !nullable) && type.isPrimitive()) {
             block.addStatement("$LSet = true", fieldName);
         }
         return block.build();
@@ -387,7 +395,7 @@ public class FieldDefinition {
 
     public CodeBlock buildMustSetCheckFlagCodeBlock(String className) {
         CodeBlock.Builder block = CodeBlock.builder();
-        if (mustSet && type.isPrimitive()) {
+        if ((mustSet || isKotlin && !nullable) && type.isPrimitive()) {
             block.beginControlFlow("if (!$LSet)", fieldName);
             block.addStatement("throw new $T(\"$L.$L must be set\")", JsonGracefulException.class, className, fieldName);
             block.endControlFlow();
@@ -419,13 +427,4 @@ public class FieldDefinition {
         }
     }
 
-    private static boolean hasAnnotationWithName(VariableElement element, String simpleName) {
-        for (AnnotationMirror mirror : element.getAnnotationMirrors()) {
-            String annotationName = mirror.getAnnotationType().asElement().getSimpleName().toString();
-            if (simpleName.equals(annotationName)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
