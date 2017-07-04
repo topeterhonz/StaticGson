@@ -3,9 +3,9 @@ package com.github.gfx.static_gson
 import com.github.gfx.static_gson.annotation.JsonSerializable
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonSyntaxException
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.*
+import org.hamcrest.Matcher
 import org.hamcrest.MatcherAssert.assertThat
 import org.json.JSONArray
 import org.json.JSONObject
@@ -30,13 +30,28 @@ class KotlinGracefulFailureTest {
     @Test
     fun deserializeNullableString() {
         // incorrect type
-        assertThat<String>(fromJson<NullableStringModel>(jsonString("value" to JSONObject())).value, nullValue())
+        jsonString("value" to JSONObject())
+                .toModel<NullableStringModel>()
+                .value
+                .assert(nullValue())
+
         // correct type
-        assertThat<String>(fromJson<NullableStringModel>(jsonString("value" to "string")).value, equalTo("string"))
+        jsonString("value" to "string")
+                .toModel<NullableStringModel>()
+                .value
+                .assert(equalTo("string"))
+
         // null
-        assertThat<String>(fromJson<NullableStringModel>(jsonString("value" to null)).value, nullValue())
+        jsonString("value" to null)
+                .toModel<NullableStringModel>()
+                .value
+                .assert(nullValue())
+
         // not set
-        assertThat<String>(fromJson<NullableStringModel>(jsonString()).value, nullValue())
+        jsonString()
+                .toModel<NullableStringModel>()
+                .value
+                .assert(nullValue())
     }
 
     @JsonSerializable
@@ -44,13 +59,14 @@ class KotlinGracefulFailureTest {
 
     @Test
     fun deserializeString() {
-        assertThat(throwsException<JsonSyntaxException> { fromJson<StringModel>(jsonString("value" to JSONObject())) },
-                instanceOf<JsonSyntaxException>())
 
-        assertThat(throwsException<JsonGracefulException> { fromJson<StringModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<StringModel>(jsonString("value" to JSONObject())) },
                 instanceOf<JsonGracefulException>())
 
-        assertThat(throwsException<JsonGracefulException> { fromJson<StringModel>(jsonString()) },
+        assertThat(throwsException { fromJson<StringModel>(jsonString("value" to null)) },
+                instanceOf<JsonGracefulException>())
+
+        assertThat(throwsException { fromJson<StringModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         assertThat<String>(fromJson<StringModel>(jsonString("value" to "string")).value, equalTo("string"))
@@ -58,6 +74,54 @@ class KotlinGracefulFailureTest {
 
     @JsonSerializable
     data class StringModel(var value: String)
+
+    @Test
+    fun deserializeMixedString() {
+
+        val correct = "string"
+        val incorrect = JSONObject()
+
+        val correctMatcher = equalTo("string")
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedStringModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrect,
+                "nonNull" to correct)
+                .toModel<MixedStringModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedStringModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedStringModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        Logger.setDelegate(null)
+    }
+
+    @JsonSerializable
+    data class MixedStringModel(val nullable: String?, var nonNull: String)
 
 
     @Test
@@ -80,15 +144,15 @@ class KotlinGracefulFailureTest {
     fun deserializeObject() {
 
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<ObjectModel>(jsonString("value" to "string")) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<ObjectModel>(jsonString("value" to "string")) },
+                instanceOf<JsonGracefulException>())
 
         // null
-        assertThat(throwsException<JsonGracefulException> { fromJson<ObjectModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<ObjectModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
 
         // not set
-        assertThat(throwsException<JsonGracefulException> { fromJson<ObjectModel>(jsonString()) },
+        assertThat(throwsException { fromJson<ObjectModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         // correct type
@@ -97,6 +161,54 @@ class KotlinGracefulFailureTest {
 
     @JsonSerializable
     data class ObjectModel(var value: StringModel)
+
+
+    @Test
+    fun deserializeMixedObject() {
+
+        val correct = json("value" to "string")
+        val incorrect = "string"
+
+        val correctMatcher = equalTo(StringModel("string"))
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedObjectModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrect,
+                "nonNull" to correct)
+                .toModel<MixedObjectModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedObjectModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedObjectModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+    }
+
+    @JsonSerializable
+    data class MixedObjectModel(val nullable: StringModel?, var nonNull: StringModel)
 
 
     @Test
@@ -119,19 +231,18 @@ class KotlinGracefulFailureTest {
     data class NullableListModel(var value: List<StringModel>?)
 
     @Test
-    @Throws(Exception::class)
     fun deserializeList() {
 
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<ListModel>(jsonString("value" to "string")) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<ListModel>(jsonString("value" to "string")) },
+                instanceOf<JsonGracefulException>())
 
         // null
-        assertThat(throwsException<JsonGracefulException> { fromJson<ListModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<ListModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
 
         // not set
-        assertThat(throwsException<JsonGracefulException> { fromJson<ListModel>(jsonString()) },
+        assertThat(throwsException { fromJson<ListModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         // correct type
@@ -140,6 +251,54 @@ class KotlinGracefulFailureTest {
 
     @JsonSerializable
     data class ListModel(var value: List<StringModel>)
+
+    @Test
+    fun deserializeMixedList() {
+        // correct type
+
+        val correct = jsonArray(json("value" to "string"))
+        val incorrect = "string"
+
+        val correctMatcher = equalTo(listOf<StringModel>(StringModel("string")))
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedListModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrect,
+                "nonNull" to correct)
+                .toModel<MixedListModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedListModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedListModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+    }
+
+    @JsonSerializable
+    data class MixedListModel(val nullable: List<StringModel>?, var nonNull: List<StringModel>)
+
 
     @Test
     fun deserializeNullableMap() {
@@ -166,15 +325,15 @@ class KotlinGracefulFailureTest {
     fun deserializeMap() {
 
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<MapModel>(jsonString("value" to "string")) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<MapModel>(jsonString("value" to "string")) },
+                instanceOf<JsonGracefulException>())
 
         // null
-        assertThat(throwsException<JsonGracefulException> { fromJson<MapModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<MapModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
 
         // not set
-        assertThat(throwsException<JsonGracefulException> { fromJson<MapModel>(jsonString()) },
+        assertThat(throwsException { fromJson<MapModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         // correct type
@@ -183,6 +342,54 @@ class KotlinGracefulFailureTest {
 
     @JsonSerializable
     data class MapModel(var value: Map<String, String>)
+
+
+    @Test
+    fun deserializeMixedMap() {
+        // correct type
+
+        val correct = json("value" to "string")
+        val incorrect = "string"
+
+        val correctMatcher = equalTo(mapOf("value" to "string"))
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedMapModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrect,
+                "nonNull" to correct)
+                .toModel<MixedMapModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedMapModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedMapModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+    }
+
+    @JsonSerializable
+    data class MixedMapModel(val nullable: Map<String, String>?, var nonNull: Map<String, String>)
 
 
     @Test
@@ -208,19 +415,19 @@ class KotlinGracefulFailureTest {
     @Test
     fun deserializeInt() {
         // incorrect type
-        assertThat(throwsException<NumberFormatException> { fromJson<IntModel>(jsonString("value" to "string")) },
-                instanceOf<NumberFormatException>())
+        assertThat(throwsException { fromJson<IntModel>(jsonString("value" to "string")) },
+                instanceOf<JsonGracefulException>())
 
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<IntModel>(jsonString("value" to json())) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<IntModel>(jsonString("value" to json())) },
+                instanceOf<JsonGracefulException>())
 
         // null
-        assertThat(throwsException<JsonGracefulException> { fromJson<IntModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<IntModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
 
         // not set
-        assertThat(throwsException<JsonGracefulException> { fromJson<IntModel>(jsonString()) },
+        assertThat(throwsException { fromJson<IntModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         // correct type
@@ -229,6 +436,62 @@ class KotlinGracefulFailureTest {
 
     @JsonSerializable
     data class IntModel(val value: Int)
+
+    @Test
+    fun deserializeMixedInt() {
+
+        val correct = 1
+        val incorrectObject = JSONObject()
+        val incorrectString = "string"
+
+        val correctMatcher = equalTo(1)
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedIntModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrectObject,
+                "nonNull" to correct)
+                .toModel<MixedIntModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // incorrect type
+        jsonString("nullable" to incorrectString,
+                "nonNull" to correct)
+                .toModel<MixedIntModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedIntModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedIntModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+    }
+
+
+    @JsonSerializable
+    data class MixedIntModel(val nullable: Int?, var nonNull: Int?)
 
 
     @Test
@@ -254,19 +517,19 @@ class KotlinGracefulFailureTest {
     @Test
     fun deserializeLong() {
         // incorrect type
-        assertThat(throwsException<NumberFormatException> { fromJson<LongModel>(jsonString("value" to "string")) },
-                instanceOf<NumberFormatException>())
+        assertThat(throwsException { fromJson<LongModel>(jsonString("value" to "string")) },
+                instanceOf<JsonGracefulException>())
 
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<LongModel>(jsonString("value" to json())) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<LongModel>(jsonString("value" to json())) },
+                instanceOf<JsonGracefulException>())
 
         // null
-        assertThat(throwsException<JsonGracefulException> { fromJson<LongModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<LongModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
 
         // not set
-        assertThat(throwsException<JsonGracefulException> { fromJson<LongModel>(jsonString()) },
+        assertThat(throwsException { fromJson<LongModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         // correct type
@@ -275,6 +538,62 @@ class KotlinGracefulFailureTest {
 
     @JsonSerializable
     data class LongModel(val value: Long)
+
+
+    @Test
+    fun deserializeMixedLong() {
+
+        val correct = 1L
+        val incorrectObject = JSONObject()
+        val incorrectString = "string"
+
+        val correctMatcher = equalTo(1L)
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedLongModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrectObject,
+                "nonNull" to correct)
+                .toModel<MixedLongModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // incorrect type
+        jsonString("nullable" to incorrectString,
+                "nonNull" to correct)
+                .toModel<MixedLongModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedLongModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedLongModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+    }
+
+    @JsonSerializable
+    data class MixedLongModel(val nullable: Long?, var nonNull: Long?)
 
 
     @Test
@@ -300,19 +619,19 @@ class KotlinGracefulFailureTest {
     @Test
     fun deserializeFloat() {
         // incorrect type
-        assertThat(throwsException<NumberFormatException> { fromJson<FloatModel>(jsonString("value" to "string")) },
-                instanceOf<NumberFormatException>())
+        assertThat(throwsException { fromJson<FloatModel>(jsonString("value" to "string")) },
+                instanceOf<JsonGracefulException>())
 
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<FloatModel>(jsonString("value" to json())) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<FloatModel>(jsonString("value" to json())) },
+                instanceOf<JsonGracefulException>())
 
         // null
-        assertThat(throwsException<JsonGracefulException> { fromJson<FloatModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<FloatModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
 
         // not set
-        assertThat(throwsException<JsonGracefulException> { fromJson<FloatModel>(jsonString()) },
+        assertThat(throwsException { fromJson<FloatModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         // correct type
@@ -322,6 +641,61 @@ class KotlinGracefulFailureTest {
     @JsonSerializable
     data class FloatModel(val value: Float)
 
+
+    @Test
+    fun deserializeMixedFloat() {
+
+        val correct = 1f
+        val incorrectObject = JSONObject()
+        val incorrectString = "string"
+
+        val correctMatcher = equalTo(1f)
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedFloatModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrectObject,
+                "nonNull" to correct)
+                .toModel<MixedFloatModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // incorrect type
+        jsonString("nullable" to incorrectString,
+                "nonNull" to correct)
+                .toModel<MixedFloatModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedFloatModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedFloatModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+    }
+
+    @JsonSerializable
+    data class MixedFloatModel(val nullable: Float?, var nonNull: Float?)
 
     @Test
     fun deserializeNullableDouble() {
@@ -346,19 +720,19 @@ class KotlinGracefulFailureTest {
     @Test
     fun deserializeDouble() {
         // incorrect type
-        assertThat(throwsException<NumberFormatException> { fromJson<DoubleModel>(jsonString("value" to "string")) },
-                instanceOf<NumberFormatException>())
+        assertThat(throwsException { fromJson<DoubleModel>(jsonString("value" to "string")) },
+                instanceOf<JsonGracefulException>())
 
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<DoubleModel>(jsonString("value" to json())) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<DoubleModel>(jsonString("value" to json())) },
+                instanceOf<JsonGracefulException>())
 
         // null
-        assertThat(throwsException<JsonGracefulException> { fromJson<DoubleModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<DoubleModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
 
         // not set
-        assertThat(throwsException<JsonGracefulException> { fromJson<DoubleModel>(jsonString()) },
+        assertThat(throwsException { fromJson<DoubleModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         // correct type
@@ -367,6 +741,62 @@ class KotlinGracefulFailureTest {
 
     @JsonSerializable
     data class DoubleModel(val value: Double)
+
+
+    @Test
+    fun deserializeMixedDouble() {
+
+        val correct = 1.0
+        val incorrectObject = JSONObject()
+        val incorrectString = "string"
+
+        val correctMatcher = equalTo(1.0)
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedDoubleModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrectObject,
+                "nonNull" to correct)
+                .toModel<MixedDoubleModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // incorrect type
+        jsonString("nullable" to incorrectString,
+                "nonNull" to correct)
+                .toModel<MixedDoubleModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedDoubleModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedDoubleModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+    }
+
+    @JsonSerializable
+    data class MixedDoubleModel(val nullable: Double?, var nonNull: Double?)
 
 
     @Test
@@ -392,19 +822,19 @@ class KotlinGracefulFailureTest {
     @Test
     fun deserializeBoolean() {
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<BooleanModel>(jsonString("value" to "string")) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<BooleanModel>(jsonString("value" to "string")) },
+                instanceOf<JsonGracefulException>())
 
         // incorrect type
-        assertThat(throwsException<JsonSyntaxException> { fromJson<BooleanModel>(jsonString("value" to json())) },
-                instanceOf<JsonSyntaxException>())
+        assertThat(throwsException { fromJson<BooleanModel>(jsonString("value" to json())) },
+                instanceOf<JsonGracefulException>())
 
         // null
-        assertThat(throwsException<JsonGracefulException> { fromJson<BooleanModel>(jsonString("value" to null)) },
+        assertThat(throwsException { fromJson<BooleanModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
 
         // not set
-        assertThat(throwsException<JsonGracefulException> { fromJson<BooleanModel>(jsonString()) },
+        assertThat(throwsException { fromJson<BooleanModel>(jsonString()) },
                 instanceOf<JsonGracefulException>())
 
         // correct type
@@ -414,6 +844,62 @@ class KotlinGracefulFailureTest {
     @JsonSerializable
     data class BooleanModel(val value: Boolean)
 
+
+    @Test
+    fun deserializeMixedBoolean() {
+
+        val correct = true
+        val incorrectObject = JSONObject()
+        val incorrectString = "string"
+
+        val correctMatcher = equalTo(true)
+
+        // correct
+        jsonString("nullable" to correct,
+                "nonNull" to correct)
+                .toModel<MixedBooleanModel>()
+                .also {
+                    it.nullable.assert(correctMatcher)
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // incorrect type
+        jsonString("nullable" to incorrectObject,
+                "nonNull" to correct)
+                .toModel<MixedBooleanModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // incorrect type
+        jsonString("nullable" to incorrectString,
+                "nonNull" to correct)
+                .toModel<MixedBooleanModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+        // null
+        jsonString("nullable" to null,
+                "nonNull" to correct)
+                .toModel<MixedBooleanModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+
+        // not set
+        jsonString("nonNull" to correct)
+                .toModel<MixedBooleanModel>()
+                .also {
+                    it.nullable.assert(nullValue())
+                    it.nonNull.assert(correctMatcher)
+                }
+    }
+
+    @JsonSerializable
+    data class MixedBooleanModel(val nullable: Boolean?, var nonNull: Boolean?)
+
     @Test
     fun deserializeNested() {
 
@@ -421,7 +907,7 @@ class KotlinGracefulFailureTest {
 
         // Strict parent with strict child.
         // Parsing should fail
-        assertThat(throwsException<JsonGracefulException> { fromJson<StrictParentStrictChild>(json) },
+        assertThat(throwsException { fromJson<StrictParentStrictChild>(json) },
                 instanceOf<JsonGracefulException>())
 
         // Strict parent with graceful child
@@ -465,57 +951,65 @@ class KotlinGracefulFailureTest {
     }
 
     @JsonSerializable
-    internal class GracefulParentGracefulChild(val parent: Parent?) {
+    class GracefulParentGracefulChild(val parent: Parent?) {
         @JsonSerializable
         class Parent(val child: String?)
     }
 
 
     @Test
-    fun deserializePartialList() {
+    fun deserializePartialObjectList() {
         // second item is bad
         val json = jsonString(
                 "list" to jsonArray(
-                        json("value" to 1),
-                        json("value" to "bad"),
-                        json("value" to 3)
+                        json("value2" to json("value" to 1), "value" to 1),
+                        json("value2" to json("value" to "bad"), "value" to 2),
+                        json("value2" to json("value" to 3), "value" to 3)
                 )
         )
 
-        val result = fromJson<PartialList>(json)
+        val result = fromJson<PartialObjectList>(json)
 
         // gracefully skips the second item
         assertThat(result.list.size, equalTo(2))
         assertThat(result.list[0].value, equalTo(1))
+        assertThat(result.list[0].value2.value, equalTo(1))
         assertThat(result.list[1].value, equalTo(3))
+        assertThat(result.list[1].value2.value, equalTo(3))
     }
 
     @JsonSerializable
-    class PartialList(val list: List<ListItem>) {
+    class PartialObjectList(val list: List<ListItem>) {
         @JsonSerializable
-        class ListItem(val value: Int)
+        class ListItem(val value: Int, val value2: IntModel)
     }
+
 
     /*
         This allow asserting multiple exceptions within a test
      */
-    private inline fun <reified T : Exception> throwsException(call: () -> Unit): T? {
-        var e: T? = null
+    private inline fun throwsException(call: () -> Any): Exception? {
+        var e: Exception? = null
         try {
             call()
         } catch (ex: Exception) {
-            e = ex as? T
+            e = ex
         }
         return e
     }
 
 
+    inline fun <reified T : Any?> T.assert(matcher: Matcher<T>, reason: String? = null)
+            = assertThat(reason ?: "", this, matcher)
+
     inline fun <reified T : Any> fromJson(json: String)
             = gson.fromJson<T>(json, T::class.java)
 
-    inline fun <reified T : Exception> instanceOf()
-            = CoreMatchers.instanceOf<T>(T::class.java)
+    inline fun <reified T : Any> instanceOf()
+            = CoreMatchers.instanceOf<Any>(T::class.java)
 
+    inline fun <reified T : Any> String.toModel()
+            = fromJson<T>(this)
 
     fun jsonArray(vararg objects: Any)
             = JSONArray(listOf(*objects))

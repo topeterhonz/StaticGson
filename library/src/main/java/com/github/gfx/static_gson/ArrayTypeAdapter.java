@@ -66,8 +66,13 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
             try {
                 E instance = componentTypeAdapter.read(in);
                 list.add(instance);
+            } catch (JsonUngracefulException ex) {
+                throw ex;
             } catch (Exception ex) {
                 Logger.log(ex);
+                if (!(ex instanceof JsonGracefulException)) {
+                    in.skipValue();
+                }
             }
         }
         in.endArray();

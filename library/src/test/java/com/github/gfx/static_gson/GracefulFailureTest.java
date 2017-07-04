@@ -7,8 +7,6 @@ import com.github.gfx.static_gson.annotation.JsonSerializable;
 import com.github.gfx.static_gson.annotation.JsonStrict;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -65,7 +63,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex = throwsException(() -> gson.fromJson(json, StrictStringModel.class));
-        assertThat(ex, instanceOf(JsonSyntaxException.class));
+        assertThat(ex, instanceOf(JsonGracefulException.class));
 
         // test that strict can be null
         StrictStringModel strictNullResult = gson.fromJson(new JSONObject().toString(), StrictStringModel.class);
@@ -88,7 +86,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json, NonNullStringModel.class));
-        assertThat(ex1, instanceOf(JsonParseException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         // test that non-null cannot be null
         Exception ex2 = throwsException(() -> gson.fromJson(new JSONObject().toString(), NonNullStringModel.class));
@@ -130,7 +128,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex = throwsException(() -> gson.fromJson(json, StrictObjectModel.class));
-        assertThat(ex, instanceOf(JsonSyntaxException.class));
+        assertThat(ex, instanceOf(JsonGracefulException.class));
 
         // test that strict can be null
         StrictObjectModel strictNullResult = gson.fromJson(new JSONObject().toString(), StrictObjectModel.class);
@@ -155,7 +153,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json, NonNullObjectModel.class));
-        assertThat(ex1, instanceOf(JsonParseException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         // test that non-null cannot be null
         Exception ex2 = throwsException(() -> gson.fromJson(new JSONObject().toString(), NonNullObjectModel.class));
@@ -198,7 +196,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex = throwsException(() -> gson.fromJson(json, StrictListModel.class));
-        assertThat(ex, instanceOf(JsonSyntaxException.class));
+        assertThat(ex, instanceOf(JsonGracefulException.class));
 
         // test that strict can be null
         StrictListModel strictNullResult = gson.fromJson(new JSONObject().toString(), StrictListModel.class);
@@ -222,7 +220,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json, NonNullListModel.class));
-        assertThat(ex1, instanceOf(JsonParseException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         // test that non-null cannot be null
         Exception ex2 = throwsException(() -> gson.fromJson(new JSONObject().toString(), NonNullListModel.class));
@@ -263,7 +261,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex = throwsException(() -> gson.fromJson(json, StrictMapModel.class));
-        assertThat(ex, instanceOf(JsonSyntaxException.class));
+        assertThat(ex, instanceOf(JsonGracefulException.class));
 
         // test that strict can be null
         StrictMapModel strictNullResult = gson.fromJson(new JSONObject().toString(), StrictMapModel.class);
@@ -287,7 +285,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json, NonNullMapModel.class));
-        assertThat(ex1, instanceOf(JsonParseException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         // test that non-null cannot be null
         Exception ex2 = throwsException(() -> gson.fromJson(new JSONObject().toString(), NonNullMapModel.class));
@@ -336,14 +334,14 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, StrictIntegerModel.class));
-        assertThat(ex1, instanceOf(NumberFormatException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .put("nullableValue", "bad")
                 .toString();
 
         Exception ex2 = throwsException(() -> gson.fromJson(json2, StrictIntegerModel.class));
-        assertThat(ex2, instanceOf(NumberFormatException.class));
+        assertThat(ex2, instanceOf(JsonGracefulException.class));
 
 
         // test that strict can be null
@@ -380,7 +378,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, MustSetIntegerModel.class));
-        assertThat(ex1, instanceOf(NumberFormatException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .toString();
@@ -434,14 +432,14 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, BooleanModel.class));
-        assertThat(ex1, instanceOf(JsonSyntaxException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .put("strictNullableBad", "bad")
                 .toString();
 
         Exception ex2 = throwsException(() -> gson.fromJson(json2, BooleanModel.class));
-        assertThat(ex2, instanceOf(JsonSyntaxException.class));
+        assertThat(ex2, instanceOf(JsonGracefulException.class));
 
         // test that strict can be null
         BooleanModel strictNullResult = gson.fromJson(new JSONObject().toString(), BooleanModel.class);
@@ -476,7 +474,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, MustSetBooleanModel.class));
-        assertThat(ex1, instanceOf(JsonSyntaxException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .toString();
@@ -518,14 +516,14 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, FloatModel.class));
-        assertThat(ex1, instanceOf(NumberFormatException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .put("strictNullableBad", "bad")
                 .toString();
 
         Exception ex2 = throwsException(() -> gson.fromJson(json2, FloatModel.class));
-        assertThat(ex2, instanceOf(NumberFormatException.class));
+        assertThat(ex2, instanceOf(JsonGracefulException.class));
 
         // test that strict can be null
         FloatModel strictNullResult = gson.fromJson(new JSONObject().toString(), FloatModel.class);
@@ -558,7 +556,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, MustSetFloatModel.class));
-        assertThat(ex1, instanceOf(NumberFormatException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .toString();
@@ -600,14 +598,14 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, DoubleModel.class));
-        assertThat(ex1, instanceOf(NumberFormatException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .put("strictNullableBad", "bad")
                 .toString();
 
         Exception ex2 = throwsException(() -> gson.fromJson(json2, DoubleModel.class));
-        assertThat(ex2, instanceOf(NumberFormatException.class));
+        assertThat(ex2, instanceOf(JsonGracefulException.class));
 
         // test that strict can be null
         DoubleModel strictNullResult = gson.fromJson(new JSONObject().toString(), DoubleModel.class);
@@ -640,7 +638,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, MustSetDoubleModel.class));
-        assertThat(ex1, instanceOf(NumberFormatException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .toString();
@@ -682,14 +680,14 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, LongModel.class));
-        assertThat(ex1, instanceOf(NumberFormatException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .put("strictNullableBad", "bad")
                 .toString();
 
         Exception ex2 = throwsException(() -> gson.fromJson(json2, LongModel.class));
-        assertThat(ex2, instanceOf(NumberFormatException.class));
+        assertThat(ex2, instanceOf(JsonGracefulException.class));
 
         // test that strict can be null
         LongModel strictNullResult = gson.fromJson(new JSONObject().toString(), LongModel.class);
@@ -722,7 +720,7 @@ public class GracefulFailureTest {
                 .toString();
 
         Exception ex1 = throwsException(() -> gson.fromJson(json1, MustSetLongModel.class));
-        assertThat(ex1, instanceOf(NumberFormatException.class));
+        assertThat(ex1, instanceOf(JsonGracefulException.class));
 
         String json2 = new JSONObject()
                 .toString();

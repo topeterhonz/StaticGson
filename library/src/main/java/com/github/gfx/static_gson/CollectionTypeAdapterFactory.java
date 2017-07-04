@@ -80,8 +80,13 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
                 try {
                     E instance = elementTypeAdapter.read(in);
                     collection.add(instance);
+                } catch (JsonUngracefulException ex) {
+                    throw ex;
                 } catch (Exception ex) {
                     Logger.log(ex);
+                    if (!(ex instanceof JsonGracefulException)) {
+                        in.skipValue();
+                    }
                 }
             }
             in.endArray();

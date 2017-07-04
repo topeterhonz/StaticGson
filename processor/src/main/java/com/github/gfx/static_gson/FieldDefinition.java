@@ -280,6 +280,9 @@ public class FieldDefinition {
 
         block.add(buildMustSetFlagCodeBlock());
 
+        block.nextControlFlow("catch ($T ex)", JsonUngracefulException.class);
+        block.addStatement("throw ex");
+
         if (element.getModifiers().contains(Modifier.PRIVATE)) {
             block.nextControlFlow("catch ($T|$T ex)", NoSuchFieldException.class, IllegalAccessException.class);
         }
@@ -295,8 +298,14 @@ public class FieldDefinition {
         }
 
         if (strict || nonNull || mustSet || (isKotlin && !nullable)) {
+            // skip all other values
+            block.beginControlFlow("while ($L.peek() != $T.$L)", reader, JsonToken.class,
+                    JsonToken.END_OBJECT);
+            block.addStatement("$L.skipValue()", reader);
+            block.endControlFlow();
+
             block.addStatement("reader.endObject()");
-            block.addStatement("throw ex");
+            block.addStatement("throw new $T(ex)", JsonGracefulException.class);
         } else {
             ClassName log = ClassName.get("com.github.gfx.static_gson", "Logger");
             block.addStatement("$T.log(ex)", log);
