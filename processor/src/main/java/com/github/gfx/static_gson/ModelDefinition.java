@@ -4,6 +4,9 @@ import com.github.gfx.static_gson.annotation.JsonSerializable;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 
+import org.jetbrains.kotlin.serialization.ClassData;
+import org.jetbrains.kotlin.serialization.jvm.JvmProtoBufUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -39,10 +42,25 @@ public class ModelDefinition {
         JsonSerializable annotation = element.getAnnotation(JsonSerializable.class);
         isKotlin = AnnotationHelper.hasAnnotationWithName(element, METADATA_ANNOTATION_NAME);
 
+        if (isKotlin && !AnnotationHelper.hasPublicParameterlessConstructor(element)) {
+
+            Metadata metadata = kotlin.AnnotationHelper.getMetadata(element);
+
+            ClassData classData = JvmProtoBufUtil.readClassDataFrom(metadata.getD1(), metadata.getD2());
+
+            if (classData.getClassProto().getConstructorList().size() > 1) {
+
+                context.processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                        String.format(
+                                "Kotlin classes %s must have only 1 constructor",
+                                element.toString()));
+            }
+        }
+
         fields = new ArrayList<>();
 
         while (true) {
-            fields.addAll(extractFields(annotation, element, isKotlin));
+            fields.addAll(extractFields(annotation, element, isKotlin, context));
             if (element.getSuperclass().toString().equals(Object.class.getName())) {
                 // reached the root
                 break;
@@ -65,14 +83,15 @@ public class ModelDefinition {
     private static List<FieldDefinition> extractFields(
             JsonSerializable config,
             TypeElement typeElement,
-            boolean isKotlin) {
+            boolean isKotlin,
+            StaticGsonContext context) {
 
         return typeElement.getEnclosedElements().stream()
                 .filter(element -> element instanceof VariableElement)
                 .map(element -> (VariableElement) element)
                 .filter(element -> !element.getModifiers().contains(Modifier.TRANSIENT))
                 .filter(element -> !element.getModifiers().contains(Modifier.STATIC))
-                .map(element -> new FieldDefinition(config, element, isKotlin))
+                .map(element -> new FieldDefinition(config, element, isKotlin, AnnotationHelper.hasDeclaredDefault(typeElement, element)))
                 .collect(Collectors.toList());
     }
 

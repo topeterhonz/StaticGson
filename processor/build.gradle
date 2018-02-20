@@ -1,6 +1,7 @@
 apply plugin: 'java'
 //apply plugin: 'com.novoda.bintray-release'
 apply plugin: 'maven'
+apply plugin: 'kotlin'
 
 targetCompatibility = JavaVersion.VERSION_1_8
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -14,6 +15,7 @@ processTestResources.dependsOn copyTestResources
 dependencies {
     compile project(':library')
     compile 'com.squareup:javapoet:1.8.0'
+    compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlin_version"
     testCompile 'junit:junit:4.12'
     testCompile 'com.google.testing.compile:compile-testing:0.9'
 }

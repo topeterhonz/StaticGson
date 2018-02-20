@@ -54,11 +54,14 @@ public class FieldDefinition {
 
     private final boolean isKotlin;
 
+    private final boolean hasDeclaredDefault;
 
-    public FieldDefinition(JsonSerializable config, VariableElement element, boolean isKotlin) {
+
+    public FieldDefinition(JsonSerializable config, VariableElement element, boolean isKotlin, boolean hasDeclaredDefault) {
         this.config = config;
         this.element = element;
         this.isKotlin = isKotlin;
+        this.hasDeclaredDefault = hasDeclaredDefault;
         type = TypeName.get(element.asType());
         fieldName = element.getSimpleName().toString();
         serializedNameCandidates = new ArrayList<>();
@@ -74,9 +77,8 @@ public class FieldDefinition {
         }
         strict = element.getAnnotation(JsonStrict.class) != null;
         mustSet = element.getAnnotation(JsonMustSet.class) != null;
-        nonNull = AnnotationHelper.hasAnnotationWithName(element, NONNULL_ANNOTATION_NAME) || AnnotationHelper
-                .hasAnnotationWithName(element,
-                        NOTNULL_ANNOTATION_NAME);
+        nonNull = AnnotationHelper.hasAnnotationWithName(element, NONNULL_ANNOTATION_NAME)
+                || AnnotationHelper.hasAnnotationWithName(element, NOTNULL_ANNOTATION_NAME);
         nullable = element.getAnnotation(Nullable.class) != null;
     }
 
@@ -297,7 +299,7 @@ public class FieldDefinition {
             block.addStatement("$L.skipValue()", reader);
         }
 
-        if (strict || nonNull || mustSet || (isKotlin && !nullable)) {
+        if (strict || nonNull || mustSet || (isKotlin && !nullable && !hasDeclaredDefault)) {
             // skip all other values
             block.beginControlFlow("while ($L.peek() != $T.$L)", reader, JsonToken.class,
                     JsonToken.END_OBJECT);
@@ -362,7 +364,7 @@ public class FieldDefinition {
 
     public CodeBlock buildNullCheckCodeBlock(String className, String object) {
         CodeBlock.Builder block = CodeBlock.builder();
-        if ((nonNull || isKotlin && !nullable) && !type.isPrimitive()) {
+        if ((nonNull || isKotlin && !nullable && !hasDeclaredDefault) && !type.isPrimitive()) {
             if (element.getModifiers().contains(Modifier.PRIVATE)) {
                 block.beginControlFlow("try");
                 String field = "field$" + fieldName;
@@ -388,7 +390,7 @@ public class FieldDefinition {
 
     public CodeBlock buildMustDeclareFlagCodeBlock() {
         CodeBlock.Builder block = CodeBlock.builder();
-        if ((mustSet || isKotlin && !nullable) && type.isPrimitive()) {
+        if ((mustSet || isKotlin && !nullable && !hasDeclaredDefault) && type.isPrimitive()) {
             block.addStatement("boolean $LSet = false", fieldName);
         }
         return block.build();
@@ -396,7 +398,7 @@ public class FieldDefinition {
 
     public CodeBlock buildMustSetFlagCodeBlock() {
         CodeBlock.Builder block = CodeBlock.builder();
-        if ((mustSet || isKotlin && !nullable) && type.isPrimitive()) {
+        if ((mustSet || isKotlin && !nullable && !hasDeclaredDefault) && type.isPrimitive()) {
             block.addStatement("$LSet = true", fieldName);
         }
         return block.build();
@@ -404,7 +406,7 @@ public class FieldDefinition {
 
     public CodeBlock buildMustSetCheckFlagCodeBlock(String className) {
         CodeBlock.Builder block = CodeBlock.builder();
-        if ((mustSet || isKotlin && !nullable) && type.isPrimitive()) {
+        if ((mustSet || isKotlin && !nullable && !hasDeclaredDefault) && type.isPrimitive()) {
             block.beginControlFlow("if (!$LSet)", fieldName);
             block.addStatement("throw new $T(\"$L.$L must be set\")", JsonGracefulException.class, className, fieldName);
             block.endControlFlow();

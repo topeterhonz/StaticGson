@@ -984,6 +984,32 @@ class KotlinGracefulFailureTest {
         class ListItem(val value: Int, val value2: IntModel)
     }
 
+    @Test
+    fun deserializeFieldWithDeclaredDefault() {
+        val json = jsonString(
+                "intValue" to 2,
+                "stringValue" to "bar",
+                "boolValue" to true
+        )
+
+        val result = fromJson<FieldWithDeclaredDefault>(json)
+        assertThat(result.intValue, equalTo(2))
+        assertThat(result.stringValue, equalTo("bar"))
+        assertThat(result.boolValue, equalTo(true))
+        assertThat(result.defaultIntValue, equalTo(2))
+        assertThat(result.defaultStringValue, equalTo("bar"))
+        assertThat(result.defaultBoolValue, equalTo(true))
+    }
+
+    @JsonSerializable
+    data class FieldWithDeclaredDefault(
+            val intValue: Int = 1,
+            val stringValue: String = "foo",
+            val boolValue: Boolean = false,
+            val defaultIntValue: Int = 2,
+            val defaultStringValue: String = "bar",
+            val defaultBoolValue: Boolean = true
+    )
 
     /*
         This allow asserting multiple exceptions within a test
