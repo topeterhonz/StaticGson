@@ -425,6 +425,42 @@ public class GracefulFailureTest {
     }
 
     @Test
+    public void deserializeFlexibleStringBoolean() throws Exception {
+        // Expected  but provided string
+
+        String json = new JSONObject()
+                .put("bad", "bad")
+                .put("good", "true")
+                .put("badNullable", "bad")
+                .put("goodNullable", "true")
+                .toString();
+
+        BooleanModel result = gson.fromJson(json, BooleanModel.class);
+        assertThat(result.bad, is(false));
+        assertThat(result.good, is(true));
+        assertThat(result.badNullable, nullValue());
+        assertThat(result.goodNullable, is(true));
+    }
+
+    @Test
+    public void deserializeFlexibleIntBoolean() throws Exception {
+        // Expected  but provided string
+
+        String json = new JSONObject()
+                .put("bad", "2")
+                .put("good", 1)
+                .put("badNullable", "2")
+                .put("goodNullable", 1)
+                .toString();
+
+        BooleanModel result = gson.fromJson(json, BooleanModel.class);
+        assertThat(result.bad, is(false));
+        assertThat(result.good, is(true));
+        assertThat(result.badNullable, nullValue());
+        assertThat(result.goodNullable, is(true));
+    }
+
+    @Test
     public void deserializeStrictBoolean() throws Exception {
         // Expected boolean but provided string
         String json1 = new JSONObject()

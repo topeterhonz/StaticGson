@@ -804,6 +804,7 @@ class KotlinGracefulFailureTest {
         // incorrect type
         assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to "string")).value, nullValue())
         assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to json())).value, nullValue())
+        assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to 3)).value, nullValue())
 
         // null
         assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to null)).value, nullValue())
@@ -813,6 +814,17 @@ class KotlinGracefulFailureTest {
 
         // correct type
         assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to true)).value, equalTo(true))
+        assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to false)).value, equalTo(false))
+
+        // flexible types
+        assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to "true")).value, equalTo(true))
+        assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to "false")).value, equalTo(false))
+
+        assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to "True")).value, equalTo(true))
+        assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to "False")).value, equalTo(false))
+
+        assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to 1)).value, equalTo(true))
+        assertThat<Boolean>(fromJson<NullableBooleanModel>(jsonString("value" to 0)).value, equalTo(false))
     }
 
     @JsonSerializable
@@ -829,6 +841,10 @@ class KotlinGracefulFailureTest {
         assertThat(throwsException { fromJson<BooleanModel>(jsonString("value" to json())) },
                 instanceOf<JsonGracefulException>())
 
+        // incorrect type
+        assertThat(throwsException { fromJson<BooleanModel>(jsonString("value" to 3)) },
+                instanceOf<JsonGracefulException>())
+
         // null
         assertThat(throwsException { fromJson<BooleanModel>(jsonString("value" to null)) },
                 instanceOf<JsonGracefulException>())
@@ -839,6 +855,16 @@ class KotlinGracefulFailureTest {
 
         // correct type
         assertThat<Boolean>(fromJson<BooleanModel>(jsonString("value" to true)).value, equalTo(true))
+        assertThat<Boolean>(fromJson<BooleanModel>(jsonString("value" to false)).value, equalTo(false))
+
+        // flexible types
+        assertThat<Boolean>(fromJson<BooleanModel>(jsonString("value" to "true")).value, equalTo(true))
+        assertThat<Boolean>(fromJson<BooleanModel>(jsonString("value" to "false")).value, equalTo(false))
+        assertThat<Boolean>(fromJson<BooleanModel>(jsonString("value" to "True")).value, equalTo(true))
+        assertThat<Boolean>(fromJson<BooleanModel>(jsonString("value" to "False")).value, equalTo(false))
+
+        assertThat<Boolean>(fromJson<BooleanModel>(jsonString("value" to 1)).value, equalTo(true))
+        assertThat<Boolean>(fromJson<BooleanModel>(jsonString("value" to 0)).value, equalTo(false))
     }
 
     @JsonSerializable
@@ -898,7 +924,9 @@ class KotlinGracefulFailureTest {
     }
 
     @JsonSerializable
-    data class MixedBooleanModel(val nullable: Boolean?, var nonNull: Boolean?)
+    data class MixedBooleanModel(
+            val nullable: Boolean?,
+            var nonNull: Boolean?)
 
     @Test
     fun deserializeNested() {

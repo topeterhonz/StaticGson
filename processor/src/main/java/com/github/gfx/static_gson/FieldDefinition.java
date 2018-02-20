@@ -239,7 +239,9 @@ public class FieldDefinition {
             block.addStatement("f.setAccessible(true)");
 
             if (unboxType.equals(TypeName.BOOLEAN)) {
-                block.addStatement("f.set($L, $L.nextBoolean())", object, reader);
+                block.addStatement(
+                        "f.set($L, com.github.gfx.static_gson.ParserHelper.nextRelaxedBoolean($L, $L, $L, (Boolean)f.get($L)))", object,
+                        reader, nullable, strict || nonNull || mustSet || (isKotlin && !nullable && !hasDeclaredDefault), object);
             } else if (unboxType.equals(TypeName.LONG)) {
                 block.addStatement("f.set($L, $L.nextLong())", object, reader);
             } else if (unboxType.equals(TypeName.INT)
@@ -260,7 +262,8 @@ public class FieldDefinition {
 
         } else {
             if (unboxType.equals(TypeName.BOOLEAN)) {
-                block.addStatement("$L.$L = $L.nextBoolean()", object, fieldName, reader);
+                block.addStatement("$L.$L = com.github.gfx.static_gson.ParserHelper.nextRelaxedBoolean($L, $L, $L, $L.$L)",
+                        object, fieldName, reader, nullable, strict || nonNull || mustSet || (isKotlin && !nullable && !hasDeclaredDefault), object, fieldName);
             } else if (unboxType.equals(TypeName.LONG)) {
                 block.addStatement("$L.$L = $L.nextLong()", object, fieldName, reader);
             } else if (unboxType.equals(TypeName.INT)
@@ -290,14 +293,10 @@ public class FieldDefinition {
         }
         block.nextControlFlow("catch ($T ex)", Exception.class);
 
-        if (!type.isBoxedPrimitive() && !type.isPrimitive() && !unboxType.equals(Types.String)) {
-            // the value could be skipped already when parsing child object
-            block.beginControlFlow("if (!(ex instanceof $T))", JsonGracefulException.class);
-            block.addStatement("$L.skipValue()", reader);
-            block.endControlFlow();
-        } else {
-            block.addStatement("$L.skipValue()", reader);
-        }
+        block.beginControlFlow("if ($L.peek() != $T.$L)", reader, JsonToken.class,
+                JsonToken.END_OBJECT);
+        block.addStatement("$L.skipValue()", reader);
+        block.endControlFlow();
 
         if (strict || nonNull || mustSet || (isKotlin && !nullable && !hasDeclaredDefault)) {
             // skip all other values
