@@ -31,13 +31,13 @@ public class StaticGsonProcessor extends AbstractProcessor {
                 .map(element -> new ModelDefinition(context, (TypeElement) element))
                 .forEach(context::addModel);
 
-        context.modelMap.values()
+        context.getModelMap().values()
                 .parallelStream()
                 .map(model -> new TypeAdapterFactoryWriter(context, model))
                 .forEach(TypeAdapterFactoryWriter::write);
 
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                "[StaticGson] processed " + context.modelMap.size() + " of models in "
+                "[StaticGson] processed " + context.getModelMap().size() + " of models in "
                         + (System.currentTimeMillis() - t0) + "ms");
 
         return true;

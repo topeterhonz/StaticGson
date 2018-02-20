@@ -1017,16 +1017,19 @@ class KotlinGracefulFailureTest {
         val json = jsonString(
                 "intValue" to 2,
                 "stringValue" to "bar",
-                "boolValue" to true
+                "boolValue" to true,
+                "listValue" to jsonArray(2)
         )
 
         val result = fromJson<FieldWithDeclaredDefault>(json)
         assertThat(result.intValue, equalTo(2))
         assertThat(result.stringValue, equalTo("bar"))
         assertThat(result.boolValue, equalTo(true))
+        assertThat(result.listValue, equalTo(listOf(2)))
         assertThat(result.defaultIntValue, equalTo(2))
         assertThat(result.defaultStringValue, equalTo("bar"))
         assertThat(result.defaultBoolValue, equalTo(true))
+        assertThat(result.listValue, equalTo(listOf(2)))
     }
 
     @JsonSerializable
@@ -1034,14 +1037,17 @@ class KotlinGracefulFailureTest {
             val intValue: Int = 1,
             val stringValue: String = "foo",
             val boolValue: Boolean = false,
+            var listValue: List<Int> = listOf(2),
             val defaultIntValue: Int = 2,
             val defaultStringValue: String = "bar",
-            val defaultBoolValue: Boolean = true
+            val defaultBoolValue: Boolean = true,
+            val defaultListValue: List<Int> = listOf(2)
+
     )
 
     /*
-        This allow asserting multiple exceptions within a test
-     */
+    This allow asserting multiple exceptions within a test
+ */
     private inline fun throwsException(call: () -> Any): Exception? {
         var e: Exception? = null
         try {
@@ -1053,26 +1059,20 @@ class KotlinGracefulFailureTest {
     }
 
 
-    inline fun <reified T : Any?> T.assert(matcher: Matcher<T>, reason: String? = null)
-            = assertThat(reason ?: "", this, matcher)
+    inline fun <reified T : Any?> T.assert(matcher: Matcher<T>, reason: String? = null) = assertThat(reason
+            ?: "", this, matcher)
 
-    inline fun <reified T : Any> fromJson(json: String)
-            = gson.fromJson<T>(json, T::class.java)
+    inline fun <reified T : Any> fromJson(json: String) = gson.fromJson<T>(json, T::class.java)
 
-    inline fun <reified T : Any> instanceOf()
-            = CoreMatchers.instanceOf<Any>(T::class.java)
+    inline fun <reified T : Any> instanceOf() = CoreMatchers.instanceOf<Any>(T::class.java)
 
-    inline fun <reified T : Any> String.toModel()
-            = fromJson<T>(this)
+    inline fun <reified T : Any> String.toModel() = fromJson<T>(this)
 
-    fun jsonArray(vararg objects: Any)
-            = JSONArray(listOf(*objects))
+    fun jsonArray(vararg objects: Any) = JSONArray(listOf(*objects))
 
-    fun json(vararg properties: Pair<String, Any?>)
-            = JSONObject(mapOf(*properties))
+    fun json(vararg properties: Pair<String, Any?>) = JSONObject(mapOf(*properties))
 
-    fun jsonString(vararg properties: Pair<String, Any?>)
-            = json(*properties).toString()
+    fun jsonString(vararg properties: Pair<String, Any?>) = json(*properties).toString()
 
 
 }

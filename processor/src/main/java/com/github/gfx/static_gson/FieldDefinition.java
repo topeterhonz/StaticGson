@@ -355,7 +355,7 @@ public class FieldDefinition {
         boolean jsonSerializable = typeElement.getAnnotation(JsonSerializable.class) != null;
 
         if (!jsonSerializable) {
-            context.processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+            context.getProcessingEnv().getMessager().printMessage(Diagnostic.Kind.ERROR,
                     String.format("%s at %s.%s must be annotated with @JsonSerializable", type.toString(), className,
                             fieldName));
         }

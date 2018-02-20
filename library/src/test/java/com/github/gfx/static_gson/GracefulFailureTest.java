@@ -447,9 +447,9 @@ public class GracefulFailureTest {
         // Expected  but provided string
 
         String json = new JSONObject()
-                .put("bad", "2")
+                .put("bad", 2)
                 .put("good", 1)
-                .put("badNullable", "2")
+                .put("badNullable", 2)
                 .put("goodNullable", 1)
                 .toString();
 
