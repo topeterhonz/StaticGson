@@ -3,7 +3,8 @@ package com.github.gfx.static_gson
 import com.github.gfx.static_gson.annotation.JsonSerializable
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.TypeName
-import org.jetbrains.kotlin.serialization.jvm.JvmProtoBufUtil
+import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
+import org.jetbrains.kotlin.serialization.deserialization.getName
 import java.util.*
 import javax.lang.model.element.Modifier
 import javax.lang.model.element.TypeElement
